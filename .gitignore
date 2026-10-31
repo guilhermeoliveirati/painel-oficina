@@ -1,0 +1,6 @@
+# Dados da oficina: ficam só no Google Drive, nunca no GitHub
+dados.json
+dados*.json
+*.xlsx
+*.csv
+desktop.ini

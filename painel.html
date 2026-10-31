@@ -1,0 +1,846 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Painel da Oficina</title>
+<meta name="theme-color" content="#1d2330">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icone.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icone-192.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#f4f5f7;--card:#fff;--txt:#1d2330;--mut:#6b7280;--brd:#e3e6eb;
+  --acc:#2563eb;--acc2:#93b4f5;--ok:#15803d;--bad:#b91c1c;--warn:#b45309;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.45 system-ui,"Segoe UI",Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;background:#1d2330;color:#fff;padding:12px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+header h1{font-size:18px;margin:0;font-weight:600}
+#status{font-size:12px;color:#cbd5e1;margin-left:auto}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav button{background:transparent;border:0;color:#cbd5e1;padding:8px 12px;border-radius:6px;cursor:pointer;font:inherit}
+nav button.on{background:#334155;color:#fff}
+main{max-width:1200px;margin:0 auto;padding:20px 16px}
+.sec{display:none}.sec.on{display:block}
+.card{background:var(--card);border:1px solid var(--brd);border-radius:10px;padding:16px;margin-bottom:16px}
+.card h2{font-size:15px;margin:0 0 12px;font-weight:600}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:16px}
+.kpi{background:var(--card);border:1px solid var(--brd);border-radius:10px;padding:12px 14px}
+.kpi .l{font-size:12px;color:var(--mut)}.kpi .v{font-size:22px;font-weight:600;margin-top:2px;font-variant-numeric:tabular-nums}
+.kpi .d{font-size:12px;margin-top:2px}
+.up{color:var(--ok)}.down{color:var(--bad)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:800px){.grid2{grid-template-columns:1fr}}
+.chart{position:relative;height:300px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{padding:6px 8px;border-bottom:1px solid var(--brd);text-align:left;white-space:nowrap}
+th{font-size:12px;color:var(--mut);font-weight:600;position:sticky;top:0;background:var(--card)}
+td.n,th.n{text-align:right}
+.scroll{overflow:auto;max-height:520px}
+form.f{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;align-items:end}
+label{display:flex;flex-direction:column;font-size:12px;color:var(--mut);gap:3px}
+input,select,textarea{font:inherit;padding:7px 8px;border:1px solid var(--brd);border-radius:6px;background:#fff;color:var(--txt)}
+input:focus,select:focus{outline:2px solid var(--acc2);border-color:var(--acc)}
+.btn{background:var(--acc);color:#fff;border:0;border-radius:6px;padding:8px 14px;cursor:pointer;font:inherit}
+.btn.sec2{background:#e5e7eb;color:var(--txt)}
+.btn.sm{padding:3px 8px;font-size:12px}
+.btn.del{background:#fee2e2;color:var(--bad)}
+.calc{background:#f8fafc;border:1px dashed var(--brd);border-radius:8px;padding:10px;font-size:13px}
+.calc b{font-variant-numeric:tabular-nums}
+.muted{color:var(--mut);font-size:12px}
+table.resumo td{font-size:15px;padding:9px 8px}
+table.resumo tr.sub td{color:var(--bad)}
+table.resumo tr.parcial td{background:#f8fafc;font-weight:600}
+table.resumo tr.final td{font-size:18px;font-weight:700;border-top:2px solid var(--txt);border-bottom:0}
+.info{flex:none;width:22px;height:22px;border-radius:50%;border:1.5px solid var(--acc);background:#fff;color:var(--acc);font:italic 700 13px/1 Georgia,serif;cursor:pointer;padding:0}
+.info[aria-expanded="true"]{background:var(--acc);color:#fff}
+.infobox{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:10px 12px;font-size:13px}
+.heat td{text-align:right}
+#gate{max-width:560px;margin:60px auto;text-align:center}
+#gate p{color:var(--mut)}
+.tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;background:#e5e7eb}
+.tag.aberto{background:#fee2e2;color:var(--bad)}.tag.ok{background:#dcfce7;color:var(--ok)}
+</style>
+</head>
+<body>
+<header>
+  <h1>🔧 Painel da Oficina</h1>
+  <nav id="nav">
+    <button data-s="geral" class="on">Visão geral</button>
+    <button data-s="vendas">Vendas</button>
+    <button data-s="despesas">Despesas</button>
+    <button data-s="clientes">Clientes</button>
+    <button data-s="pend">Pendências</button>
+    <button data-s="dizimo">Dízimo</button>
+    <button data-s="resumo">Resumo</button>
+    <button data-s="config">Config</button>
+  </nav>
+  <span id="status">sem dados</span>
+  <button class="btn sm" id="reconectar" style="display:none;background:#fbbf24;color:#1d2330">Entrar no Google de novo</button>
+</header>
+
+<div id="gate" class="card">
+  <h2>Abrir os dados</h2>
+  <p>Os dados ficam no arquivo <b>dados.json</b>, na pasta Meu Drive › Mecanica › Painel. Ele é salvo automaticamente a cada alteração, e o Google Drive faz o backup.</p>
+  <div class="row" style="justify-content:center">
+    <button class="btn" id="btnReabrir" style="display:none">Continuar com dados.json</button>
+    <button class="btn" id="btnAbrir">📁 Escolher dados.json deste computador…</button>
+  </div>
+  <div id="boxDrive" style="display:none;margin-top:12px">
+    <div class="row" style="justify-content:center">
+      <button class="btn" id="btnDrive">☁️ Abrir pelo Google Drive</button>
+      <button class="btn sec2" id="btnDriveOutro" style="display:none">Escolher outro arquivo no Drive…</button>
+    </div>
+    <p class="muted">Use no tablet ou celular: entra com sua conta Google e escolhe o dados.json uma vez.</p>
+  </div>
+  <p class="muted" id="gateMsg">Use Chrome ou Edge. Só na primeira vez é preciso escolher o arquivo; depois o painel abre o mesmo dados.json sozinho.</p>
+</div>
+
+<main id="app" style="display:none">
+
+<!-- VISÃO GERAL -->
+<section class="sec on" id="s-geral">
+  <div class="row" style="margin-bottom:12px">
+    <label>Ano <select id="gAno"></select></label>
+    <span class="muted" id="gObs"></span>
+  </div>
+  <div class="kpis" id="gKpis"></div>
+  <div class="card"><h2>Faturamento e lucro por mês</h2><div class="chart"><canvas id="cMes"></canvas></div></div>
+  <div class="grid2">
+    <div class="card"><h2>Evolução anual</h2><div class="chart"><canvas id="cAno"></canvas></div></div>
+    <div class="card"><h2>Formas de pagamento (ano selecionado)</h2><div class="chart"><canvas id="cMet"></canvas></div></div>
+  </div>
+  <div class="card"><h2>Faturamento: mês × ano</h2><div class="scroll"><table class="heat" id="tHeat"></table></div>
+    <p class="muted">Cada célula tem a cor proporcional ao faturamento do mês. A última coluna é a variação do ano selecionado contra o ano anterior.</p></div>
+  <div class="card"><h2>Fechamento mensal</h2><div class="scroll"><table id="tFech"></table></div></div>
+</section>
+
+<!-- VENDAS -->
+<section class="sec" id="s-vendas">
+  <div class="card">
+    <h2 id="vTitulo">Nova venda</h2>
+    <form class="f" id="fVenda" autocomplete="off">
+      <input type="hidden" name="id">
+      <label>Cliente<input name="cliente" list="dlClientes" required></label>
+      <label>Data<input name="data" type="date" required></label>
+      <label>Venda de peças (R$)<input name="pecas" type="number" step="0.01" min="0" value="0"></label>
+      <label>Margem em peças – seu ganho (R$)<input name="descPecas" type="number" step="0.01" min="0" value="0"></label>
+      <label>Serviço (R$)<input name="servico" type="number" step="0.01" min="0" value="0"></label>
+      <label>Valor cobrado (R$)<input name="cobrado" type="number" step="0.01" min="0" value="0"></label>
+      <label>Pagamento<select name="metodo" id="selMetodo"></select></label>
+      <label style="grid-column:span 2">Obs<input name="obs"></label>
+      <div class="calc" style="grid-column:1/-1;display:flex;gap:8px;align-items:flex-start">
+        <button type="button" class="info" id="vInfoBtn" title="Como o lucro é calculado" aria-expanded="false">i</button>
+        <div id="vCalc" style="flex:1"></div>
+      </div>
+      <div class="infobox" id="vInfo" hidden style="grid-column:1/-1">
+        <b>Como o lucro é calculado</b>
+        <p style="margin:6px 0"><b>Lucro = valor cobrado + desconto em peças − venda de peças − taxa</b></p>
+        <ul style="margin:0;padding-left:18px">
+          <li><b>Valor cobrado</b>: o que o cliente paga (peças + serviço + o valor a mais que você define na hora).</li>
+          <li><b>Desconto em peças</b>: o que você ganha comprando a peça mais barato e vendendo pelo preço da loja.</li>
+          <li><b>Venda de peças</b>: o preço original da peça. Sai do lucro porque esse dinheiro volta para a loja.</li>
+          <li><b>Taxa</b>: o que a maquininha cobra no cartão.</li>
+        </ul>
+        <p style="margin:6px 0 0">É o mesmo que <b>serviço + desconto em peças + valor a mais − taxa</b>.<br>
+        Exemplo: cobrado R$ 639, peças R$ 304 com 10% de desconto (R$ 30,40), crédito 2x (taxa R$ 34,44):
+        639 + 30,40 − 304 − 34,44 = <b>R$ 330,96</b>.</p>
+        <p class="muted" style="margin:6px 0 0">Esse é o lucro de cada venda. O "Lucro final" do mês ainda desconta as despesas (MEI, INSS, combustível…).</p>
+      </div>
+      <div class="row" style="grid-column:1/-1">
+        <button class="btn" type="submit">Salvar venda</button>
+        <button class="btn sec2" type="button" id="vCancelar">Limpar</button>
+      </div>
+    </form>
+    <datalist id="dlClientes"></datalist>
+    <p class="muted">A margem em peças é preenchida sozinha com 10% das peças (padrão em Config). Se for diferente, é só alterar o valor em R$. O valor cobrado é preenchido com peças + serviço. Lucro = serviço + margem em peças + o que for cobrado acima de peças + serviço − taxa do cartão.</p>
+  </div>
+  <div class="card">
+    <div class="row" style="justify-content:space-between;margin-bottom:8px">
+      <h2 style="margin:0">Vendas do mês</h2>
+      <div class="row" style="align-items:end"><label>Mês<input type="month" id="vMes"></label><label>Buscar<input id="vBusca" placeholder="cliente ou obs"></label>
+        <button class="btn sec2" id="vExcel" title="Cria a planilha do mês dentro da pasta do ano (ex.: Mecanica\2026)">📄 Gerar Excel do mês</button>
+        <a href="#" id="vTrocaPasta" class="muted" title="Esquece a pasta escolhida e pergunta de novo no próximo Excel">trocar pasta</a></div>
+    </div>
+    <div id="vResumo" class="muted" style="margin-bottom:8px"></div>
+    <div class="scroll"><table id="tVendas"></table></div>
+  </div>
+</section>
+
+<!-- DESPESAS -->
+<section class="sec" id="s-despesas">
+  <div class="card">
+    <h2>Lançar despesa</h2>
+    <form class="f" id="fDesp" autocomplete="off">
+      <input type="hidden" name="id">
+      <label>Data<input name="data" type="date" required></label>
+      <label>Categoria<select name="categoria" id="selCat"></select></label>
+      <label>Descrição<input name="descricao"></label>
+      <label>Valor (R$)<input name="valor" type="number" step="0.01" min="0" required></label>
+      <div class="row"><button class="btn" type="submit">Salvar</button><button class="btn sec2" type="button" id="dCancelar">Limpar</button></div>
+    </form>
+    <div class="row" style="margin-top:10px">
+      <button class="btn sec2" id="dCopiar">Copiar despesas fixas do mês anterior</button>
+      <span class="muted">Copia MEI, INSS e Combustível do mês anterior para o mês escolhido abaixo.</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="row" style="justify-content:space-between;margin-bottom:8px">
+      <h2 style="margin:0">Despesas</h2>
+      <label>Mês<input type="month" id="dMes"></label>
+    </div>
+    <div class="scroll"><table id="tDesp"></table></div>
+    <p class="muted">Só os meses a partir de março/2026 tinham despesas registradas nas planilhas. Nos meses anteriores, o lucro final mostra apenas o lucro das vendas.</p>
+  </div>
+</section>
+
+<!-- CLIENTES -->
+<section class="sec" id="s-clientes">
+  <div class="grid2">
+    <div class="card"><h2>Melhores clientes (todos os anos)</h2><div class="scroll"><table id="tTop"></table></div></div>
+    <div class="card"><h2>Clientes sumidos</h2>
+      <p class="muted">Clientes que vieram 2 vezes ou mais e não voltam há mais de <input id="cDias" type="number" value="180" style="width:70px"> dias. Vale chamar no WhatsApp.</p>
+      <div class="scroll"><table id="tSumidos"></table></div></div>
+  </div>
+  <div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Histórico do cliente</h2><label>Cliente<input id="cBusca" list="dlClientes"></label></div>
+    <div id="cHist" style="margin-top:10px"></div></div>
+</section>
+
+<!-- PENDÊNCIAS -->
+<section class="sec" id="s-pend">
+  <div class="card">
+    <h2>Inadimplentes / problemas</h2>
+    <form class="f" id="fPend" autocomplete="off">
+      <input type="hidden" name="id">
+      <label>Cliente<input name="cliente" list="dlClientes" required></label>
+      <label>Data<input name="data" type="date" required></label>
+      <label>Valor devido (R$)<input name="valor" type="number" step="0.01" min="0" required></label>
+      <label>Problema<input name="descricao"></label>
+      <label>Status<select name="status"><option>Em aberto</option><option>Resolvido</option></select></label>
+      <label>Data resolução<input name="dataResolucao" type="date"></label>
+      <label>Obs<input name="obs"></label>
+      <div class="row"><button class="btn" type="submit">Salvar</button><button class="btn sec2" type="button" id="pCancelar">Limpar</button></div>
+    </form>
+  </div>
+  <div class="card"><div id="pResumo" class="muted" style="margin-bottom:8px"></div><div class="scroll"><table id="tPend"></table></div></div>
+</section>
+
+<!-- DÍZIMO -->
+<section class="sec" id="s-dizimo">
+  <div class="card" style="max-width:640px">
+    <div class="row" style="justify-content:space-between;margin-bottom:8px">
+      <h2 style="margin:0">Dízimo do mês</h2>
+      <label>Mês<input type="month" id="zMes"></label>
+    </div>
+    <table id="tDiz">
+      <tr><th>Descrição</th><th class="n">Valor (R$)</th><th class="n">10%</th></tr>
+    </table>
+    <p class="muted" id="zLucro"></p>
+    <p class="muted">Salva automaticamente ao digitar.</p>
+  </div>
+  <div class="card"><h2>Histórico</h2><div class="scroll"><table id="tDizHist"></table></div></div>
+</section>
+
+<!-- RESUMO -->
+<section class="sec" id="s-resumo">
+  <div class="card" style="max-width:560px">
+    <div class="row" style="justify-content:space-between;margin-bottom:8px">
+      <h2 style="margin:0">Resumo do mês</h2>
+      <label>Mês<input type="month" id="rMes"></label>
+    </div>
+    <table id="tResumo" class="resumo"></table>
+    <p class="muted" id="rObs"></p>
+  </div>
+  <div class="card">
+    <div class="row" style="justify-content:space-between;margin-bottom:8px">
+      <h2 style="margin:0">Resumo do ano</h2>
+      <label>Ano<select id="rAno"></select></label>
+    </div>
+    <div class="scroll"><table id="tResumoAno"></table></div>
+  </div>
+</section>
+
+<!-- CONFIG -->
+<section class="sec" id="s-config">
+  <div class="grid2">
+    <div class="card"><h2>Margem em peças</h2>
+      <label style="max-width:220px">Margem padrão (%)<input id="cfgMargem" type="number" step="0.1" min="0" max="100"></label>
+      <p class="muted">É a % que já vem preenchida em cada venda nova. Em cada venda você ainda pode mudar.</p></div>
+    <div class="card"><h2>Taxas da maquininha</h2><table id="tTaxas"></table>
+      <p class="muted">Ao mudar uma taxa, só as vendas novas usam o valor novo.</p></div>
+    <div class="card"><h2>Arquivo e exportação</h2>
+      <p class="muted" id="cfgInfo"></p>
+      <div class="row">
+        <button class="btn sec2" id="xVendas">Exportar vendas (.csv)</button>
+        <button class="btn sec2" id="xDesp">Exportar despesas (.csv)</button>
+        <button class="btn sec2" id="xJson">Baixar cópia do dados.json</button>
+      </div>
+      <p class="muted">O CSV abre direto no Excel.</p>
+    </div>
+  </div>
+</section>
+</main>
+
+<script>
+const MESES=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+const CATS=["MEI","INSS","Combustível","Ferramentas / prejuízo","Aluguel","Peças / estoque","Outros"];
+const brl=v=>(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const brl0=v=>(v||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});
+const pct=v=>isFinite(v)?(v*100).toLocaleString("pt-BR",{maximumFractionDigits:1})+"%":"–";
+const r2=v=>Math.round((+v||0)*100)/100;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+// "joao da silva" -> "Joao da Silva": 1ª letra de cada palavra maiúscula (o resto fica como foi digitado)
+const nomeProprio=s=>String(s??"").trim().replace(/\s+/g," ").split(" ").map((p,i)=>
+  i>0&&/^(da|de|do|das|dos|e)$/i.test(p)?p.toLowerCase():p.charAt(0).toLocaleUpperCase("pt-BR")+p.slice(1)).join(" ");
+document.addEventListener("focusout",e=>{if(e.target.name==="cliente"&&e.target.value)e.target.value=nomeProprio(e.target.value)});
+const hoje=()=>new Date().toLocaleDateString("sv-SE");
+const fmtData=d=>d?d.split("-").reverse().join("/"):"";
+
+let D=null, fonte=null, charts={};
+
+/* ---------- onde ficam os dados ----------
+   Duas fontes com a mesma interface (ler / versao / gravar):
+   - local: arquivo dados.json do computador (Chrome/Edge no PC, pasta do Google Drive sincronizada)
+   - drive: o mesmo dados.json lido e gravado pela API do Google Drive (tablet, celular ou qualquer navegador)
+   "versao" muda sempre que o arquivo muda; serve para não gravar por cima de alteração feita em outro lugar. */
+// Preencher com os dados do Google Cloud (ver LEIA-ME.md). O ID do cliente e a chave não são segredos.
+const GOOGLE={clientId:"", apiKey:"", appId:""};
+const driveConfigurado=()=>!!(GOOGLE.clientId&&GOOGLE.apiKey&&GOOGLE.appId);
+const LS={get(k){try{return JSON.parse(localStorage.getItem(k))}catch{return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
+
+const IDB={db:null,
+  open(){return new Promise((ok,err)=>{const r=indexedDB.open("painel-oficina",1);r.onupgradeneeded=()=>r.result.createObjectStore("kv");r.onsuccess=()=>ok(this.db=r.result);r.onerror=()=>err(r.error)})},
+  async get(k){try{await this.open();return await new Promise(ok=>{const r=this.db.transaction("kv").objectStore("kv").get(k);r.onsuccess=()=>ok(r.result);r.onerror=()=>ok(null)})}catch{return null}},
+  async set(k,v){try{await this.open();this.db.transaction("kv","readwrite").objectStore("kv").put(v,k)}catch{}}
+};
+function fonteLocal(h){return{tipo:"local",nome:h.name,intervalo:5000,
+  async versao(){return String((await h.getFile()).lastModified)},
+  async ler(){const f=await h.getFile();return{dados:JSON.parse(await f.text()),versao:String(f.lastModified)}},
+  async gravar(json){const w=await h.createWritable();await w.write(json);await w.close();return this.versao()}}}
+
+/* --- Google: login (token) e seletor de arquivos --- */
+class ErroLogin extends Error{}
+const carregarScript=src=>new Promise((ok,err)=>{if(document.querySelector(`script[src="${src}"]`))return ok();const s=document.createElement("script");s.src=src;s.onload=ok;s.onerror=()=>err(new Error("sem internet ("+src+")"));document.head.appendChild(s)});
+let gToken=LS.get("gToken");
+const tokenValido=()=>gToken&&Date.now()<gToken.exp-60000;
+async function loginGoogle(){ // precisa vir de um toque/clique (abre a janela do Google)
+  await carregarScript("https://accounts.google.com/gsi/client");
+  await new Promise((ok,err)=>{
+    google.accounts.oauth2.initTokenClient({client_id:GOOGLE.clientId,scope:"https://www.googleapis.com/auth/drive.file",
+      callback:r=>{if(r.error)return err(new Error(r.error_description||r.error));gToken={t:r.access_token,exp:Date.now()+r.expires_in*1000};LS.set("gToken",gToken);ok()},
+      error_callback:e=>err(new Error(e.type==="popup_closed"?"janela do Google fechada":"login não concluído ("+e.type+")"))
+    }).requestAccessToken({prompt:LS.get("gJaAutorizou")?"":"consent"});
+  });
+  LS.set("gJaAutorizou",true);
+}
+async function api(url,op={}){
+  if(!tokenValido())throw new ErroLogin("sessão do Google expirada");
+  const r=await fetch(url,{...op,headers:{...(op.headers||{}),Authorization:"Bearer "+gToken.t}});
+  if(r.status===401){gToken=null;LS.set("gToken",null);throw new ErroLogin("sessão do Google expirada")}
+  if(!r.ok)throw new Error("Google Drive respondeu "+r.status+": "+(await r.text()).slice(0,200));
+  return r;
+}
+function fonteDrive(id,nome){const U="https://www.googleapis.com/drive/v3/files/"+id;return{tipo:"drive",nome,id,intervalo:15000,
+  async versao(){return(await (await api(U+"?fields=version")).json()).version},
+  async ler(){const v=await this.versao();const dados=await (await api(U+"?alt=media")).json();return{dados,versao:v}},
+  async gravar(json){const r=await api("https://www.googleapis.com/upload/drive/v3/files/"+id+"?uploadType=media&fields=version",
+    {method:"PATCH",headers:{"Content-Type":"application/json; charset=UTF-8"},body:json});return(await r.json()).version}}}
+async function escolherNoDrive(){
+  await carregarScript("https://apis.google.com/js/api.js");
+  await new Promise(ok=>gapi.load("picker",ok));
+  return new Promise((ok,err)=>{
+    const view=new google.picker.DocsView(google.picker.ViewId.DOCS).setMimeTypes("application/json").setIncludeFolders(true).setMode(google.picker.DocsViewMode.LIST);
+    new google.picker.PickerBuilder().addView(view).setOAuthToken(gToken.t).setDeveloperKey(GOOGLE.apiKey).setAppId(GOOGLE.appId)
+      .setTitle("Escolha o dados.json (Mecanica › Painel)").setLocale("pt-BR")
+      .setCallback(d=>{if(d.action===google.picker.Action.PICKED)ok(d.docs[0]);else if(d.action===google.picker.Action.CANCEL)err(new Error("nenhum arquivo escolhido"))})
+      .build().setVisible(true);
+  });
+}
+
+/* --- abrir --- */
+let versaoConhecida=null;
+async function abrirFonte(f){
+  const r=await f.ler();fonte=f;D=r.dados;versaoConhecida=r.versao;iniciar();
+}
+async function abrirLocal(h){
+  if(await h.queryPermission({mode:"readwrite"})!=="granted" && await h.requestPermission({mode:"readwrite"})!=="granted") throw new Error("Permissão negada");
+  await IDB.set("handle",h);LS.set("modo","local");await abrirFonte(fonteLocal(h));
+}
+async function abrirDrive(escolherOutro){
+  if(!tokenValido())await loginGoogle();
+  let arq=LS.get("driveArquivo");
+  if(!arq||escolherOutro){const d=await escolherNoDrive();arq={id:d.id,nome:d.name};LS.set("driveArquivo",arq)}
+  LS.set("modo","drive");await abrirFonte(fonteDrive(arq.id,arq.nome));
+}
+const erroGate=e=>{if(e.name!=="AbortError")$("#gateMsg").textContent="Erro: "+e.message};
+$("#btnAbrir").onclick=async()=>{
+  if(!window.showOpenFilePicker){
+    const i=document.createElement("input");i.type="file";i.accept=".json";
+    i.onchange=async()=>{D=JSON.parse(await i.files[0].text());iniciar();status("modo somente leitura: use Config › Baixar cópia para salvar",true)};
+    i.click();return;
+  }
+  try{const [h]=await showOpenFilePicker({types:[{description:"dados",accept:{"application/json":[".json"]}}]});await abrirLocal(h)}catch(e){erroGate(e)}
+};
+$("#btnDrive").onclick=()=>abrirDrive(false).catch(erroGate);
+$("#btnDriveOutro").onclick=()=>abrirDrive(true).catch(erroGate);
+// Ao abrir/atualizar a página: reabre sozinho a última fonte usada.
+// Quando o navegador ou o Google pedem confirmação, basta um toque em qualquer lugar.
+(async()=>{
+  if(!window.showOpenFilePicker)$("#btnAbrir").style.display="none";
+  if(driveConfigurado())$("#boxDrive").style.display="";
+  else if(!window.showOpenFilePicker)$("#gateMsg").textContent="Neste aparelho o painel usa o Google Drive, que ainda não foi configurado (ver LEIA-ME.md).";
+  if(LS.get("driveArquivo"))$("#btnDriveOutro").style.display="";
+  if(LS.get("modo")==="drive"&&driveConfigurado()&&LS.get("driveArquivo")){
+    const arq=LS.get("driveArquivo");
+    if(tokenValido()){try{await abrirFonte(fonteDrive(arq.id,arq.nome));return}catch(e){erroGate(e)}}
+    $("#gateMsg").innerHTML=`Toque em qualquer lugar para abrir <b>${esc(arq.nome)}</b> do Google Drive.`;
+    const abrir=e=>{if(e.target.closest("button"))return;document.removeEventListener("click",abrir);abrirDrive(false).catch(err=>{erroGate(err);document.addEventListener("click",abrir)})};
+    document.addEventListener("click",abrir);return;
+  }
+  const h=await IDB.get("handle");if(!h)return;
+  try{if(await h.queryPermission({mode:"readwrite"})==="granted"){await abrirLocal(h);return}}catch{}
+  const b=$("#btnReabrir");b.style.display="";$("#btnAbrir").textContent="Escolher outro arquivo…";
+  $("#gateMsg").innerHTML='Clique em qualquer lugar para abrir o <b>dados.json</b>. Quando o navegador perguntar, escolha <b>"Permitir em todas as visitas"</b> para ele abrir sozinho da próxima vez.';
+  const abrir=e=>{if(e.target.closest("button")&&e.target.id!=="btnReabrir")return;document.removeEventListener("click",abrir);
+    abrirLocal(h).catch(err=>{erroGate(err);document.addEventListener("click",abrir)})};
+  document.addEventListener("click",abrir);
+})();
+
+/* --- gravar --- */
+// Cada alteração é gravada na hora, uma de cada vez, na ordem.
+let fila=Promise.resolve(), pendentes=0, geracao=0;
+function salvar(){
+  D.atualizado=new Date().toISOString().slice(0,19);
+  _M=null;
+  if(!fonte){status("alterações NÃO salvas: baixe uma cópia em Config",true);return}
+  pendentes++;status("salvando…");
+  const json=JSON.stringify(D,null,1), g=geracao;
+  fila=fila.then(async()=>{
+    try{
+      if(g!==geracao)return; // alteração feita sobre uma versão que já foi descartada
+      // nunca gravar por cima de uma versão mais nova feita em outro lugar
+      if(await fonte.versao()!==versaoConhecida){
+        geracao++;const r=await fonte.ler();D=r.dados;D.dizimos??={};versaoConhecida=r.versao;render();
+        status("o arquivo tinha sido alterado em outro lugar: recarregado",true);
+        alert("O dados.json foi alterado em outro lugar (outro aparelho ou outra aba).\nO painel carregou a versão mais nova. Refaça a última alteração.");
+        return;
+      }
+      versaoConhecida=await fonte.gravar(json);
+      $("#reconectar").style.display="none";
+      if(pendentes===1)status("salvo às "+new Date().toLocaleTimeString("pt-BR").slice(0,5))}
+    catch(e){
+      if(e instanceof ErroLogin){status("NÃO salvo: entre de novo no Google",true);$("#reconectar").style.display=""}
+      else{status("ERRO ao salvar: "+e.message,true);alert("Não foi possível salvar no dados.json: "+e.message)}}
+    finally{pendentes--}
+  });
+}
+// Sessão do Google expirou (dura ~1 hora): um toque renova e grava o que ficou pendente.
+$("#reconectar").onclick=async()=>{try{await loginGoogle();salvar()}catch(e){status("Erro: "+e.message,true)}};
+addEventListener("beforeunload",e=>{if(pendentes>0){e.preventDefault();e.returnValue=""}});
+// Se o dados.json for alterado em outro lugar, recarrega sozinho (ao voltar para a página e de tempos em tempos).
+async function conferirArquivo(){
+  if(!fonte||pendentes>0||(fonte.tipo==="drive"&&!tokenValido()))return;
+  try{if(await fonte.versao()!==versaoConhecida){const r=await fonte.ler();D=r.dados;D.dizimos??={};versaoConhecida=r.versao;render();status("atualizado com a versão mais nova do arquivo")}}
+  catch{}
+}
+addEventListener("focus",conferirArquivo);
+let ultimaConferencia=0;
+setInterval(()=>{if(!document.hidden&&fonte&&Date.now()-ultimaConferencia>=fonte.intervalo){ultimaConferencia=Date.now();conferirArquivo()}},5000);
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)conferirArquivo()});
+function status(t,erro){const s=$("#status");s.textContent=t;s.style.color=erro?"#fca5a5":""}
+const novoId=p=>p+(D.proximoId++);
+
+/* ---------- navegação ---------- */
+$("#nav").onclick=e=>{const b=e.target.closest("button");if(!b)return;
+  document.querySelectorAll("#nav button").forEach(x=>x.classList.toggle("on",x===b));
+  document.querySelectorAll(".sec").forEach(s=>s.classList.toggle("on",s.id==="s-"+b.dataset.s));
+  render();
+};
+
+/* ---------- agregações ---------- */
+function agregar(){
+  const m={};
+  const get=k=>m[k]??={fat:0,lucro:0,taxa:0,serv:0,pec:0,marg:0,mais:0,n:0,desp:0};
+  for(const v of D.vendas){const a=get(v.data.slice(0,7));a.fat+=v.cobrado;a.lucro+=v.lucro;a.taxa+=v.taxa;a.serv+=v.servico;a.pec+=v.pecas;a.marg+=v.descPecas;a.mais+=v.cobrado-v.pecas-v.servico;a.n++}
+  for(const d of D.despesas){get(d.data.slice(0,7)).desp+=d.valor}
+  return m;
+}
+const anos=()=>[...new Set(D.vendas.map(v=>+v.data.slice(0,4)))].sort();
+
+/* ---------- visão geral ---------- */
+function renderGeral(){
+  const M=agregar(), A=anos(), sel=$("#gAno");
+  if(!sel.options.length){A.forEach(a=>sel.add(new Option(a,a)));sel.value=A.at(-1);sel.onchange=renderGeral}
+  const ano=+sel.value, ant=ano-1;
+  // comparar mesmo período: até o último mês com vendas no ano selecionado
+  const mesesAno=Object.keys(M).filter(k=>k.startsWith(ano)).map(k=>+k.slice(5));
+  const ult=Math.max(...mesesAno,0);
+  const soma=(a,ateMes)=>{const t={fat:0,lucro:0,taxa:0,n:0,desp:0,serv:0,pec:0,marg:0,mais:0};for(let i=1;i<=ateMes;i++){const x=M[`${a}-${String(i).padStart(2,"0")}`];if(x)for(const k in t)t[k]+=x[k]}return t};
+  const t=soma(ano,12), p=soma(ant,ult);
+  $("#gObs").textContent=p.n?`Comparação com ${ant} no mesmo período (jan–${MESES[ult-1].toLowerCase()})`:"";
+  const k=(l,v,vp,f=brl0,inv)=>{let d="";if(p.n&&vp){const r=v/vp-1;const bom=inv?r<0:r>0;d=`<div class="d ${bom?"up":"down"}">${r>0?"▲":"▼"} ${pct(Math.abs(r))} vs ${ant}</div>`}
+    return `<div class="kpi"><div class="l">${l}</div><div class="v">${f(v)}</div>${d}</div>`};
+  $("#gKpis").innerHTML=
+    k("Faturamento",t.fat,p.fat)+k("Lucro das vendas",t.lucro,p.lucro)+
+    k("Despesas",t.desp,p.desp,brl0,true)+k("Lucro final",t.lucro-t.desp,p.desp?p.lucro-p.desp:0)+
+    k("Atendimentos",t.n,p.n,x=>x)+k("Ticket médio",t.n?t.fat/t.n:0,p.n?p.fat/p.n:0)+
+    k("Taxas de cartão",t.taxa,p.taxa,brl0,true)+k("Margem",t.fat?t.lucro/t.fat:0,p.fat?p.lucro/p.fat:0,pct);
+
+  const serie=(a,c)=>MESES.map((_,i)=>M[`${a}-${String(i+1).padStart(2,"0")}`]?.[c]??null);
+  chart("cMes","bar",{labels:MESES,datasets:[
+    {label:`Faturamento ${ano}`,data:serie(ano,"fat"),backgroundColor:"#2563eb",order:2},
+    {label:`Lucro ${ano}`,data:serie(ano,"lucro"),backgroundColor:"#93b4f5",order:2},
+    {label:`Faturamento ${ant}`,data:serie(ant,"fat"),type:"line",borderColor:"#9ca3af",backgroundColor:"#9ca3af",borderDash:[5,4],pointRadius:3,order:1,spanGaps:true}]});
+
+  const anosC=A.filter(a=>a>2021);
+  const tot=a=>soma(a,12);
+  chart("cAno","bar",{labels:anosC.map(a=>a+(a===A.at(-1)&&ult<12?` (até ${MESES[ult-1]})`:"")),datasets:[
+    {label:"Faturamento",data:anosC.map(a=>tot(a).fat),backgroundColor:"#2563eb"},
+    {label:"Lucro",data:anosC.map(a=>tot(a).lucro),backgroundColor:"#93b4f5"}]});
+
+  const met={};D.vendas.filter(v=>v.data.startsWith(ano)).forEach(v=>{const g=v.metodo.startsWith("Crédito")?(v.metodo==="Crédito 1x"?"Crédito à vista":"Crédito parcelado"):(v.metodo||"Não informado");met[g]=(met[g]||0)+v.cobrado});
+  const ks=Object.keys(met).sort((a,b)=>met[b]-met[a]);
+  chart("cMet","doughnut",{labels:ks,datasets:[{data:ks.map(x=>met[x]),backgroundColor:["#2563eb","#0d9488","#f59e0b","#8b5cf6","#ef4444","#9ca3af"]}]},
+    {plugins:{legend:{position:"right"},tooltip:{callbacks:{label:c=>`${c.label}: ${brl0(c.raw)} (${pct(c.raw/ks.reduce((s,x)=>s+met[x],0))})`}}}});
+
+  // heatmap mês × ano
+  const mx=Math.max(...Object.values(M).map(x=>x.fat));
+  let h=`<tr><th>Mês</th>${anosC.map(a=>`<th class="n">${a}</th>`).join("")}<th class="n">${ano} vs ${ant}</th></tr>`;
+  MESES.forEach((n,i)=>{const mm=String(i+1).padStart(2,"0");
+    h+=`<tr><td>${n}</td>`+anosC.map(a=>{const x=M[`${a}-${mm}`];if(!x)return`<td class="muted">–</td>`;const al=(x.fat/mx*0.75).toFixed(2);
+      return`<td style="background:rgba(37,99,235,${al});color:${al>0.45?"#fff":"inherit"}">${brl0(x.fat)}</td>`}).join("");
+    const a1=M[`${ano}-${mm}`],a0=M[`${ant}-${mm}`];const r=a1&&a0?a1.fat/a0.fat-1:null;
+    h+=`<td class="${r==null?"":r>=0?"up":"down"}">${r==null?"–":(r>0?"+":"")+pct(r)}</td></tr>`});
+  h+=`<tr><th>Total</th>${anosC.map(a=>`<th class="n">${brl0(tot(a).fat)}</th>`).join("")}<th></th></tr>`;
+  $("#tHeat").innerHTML=h;
+
+  const maisCel=(m,b)=>Math.abs(m)<0.005?"–":`${m<0?"−":""}${brl(Math.abs(m))}${b?` <span class="muted">(${m<0?"−":"+"}${pct(Math.abs(m)/b)})</span>`:""}`;
+  let f=`<tr><th>Mês</th><th class="n">Atend.</th><th class="n">Faturamento</th><th class="n">Cobrado a mais</th><th class="n">Serviço</th><th class="n">Peças</th><th class="n">Margem peças</th><th class="n">Taxas</th><th class="n">Lucro vendas</th><th class="n">Despesas</th><th class="n">Lucro final</th><th class="n">Ticket médio</th></tr>`;
+  MESES.forEach((n,i)=>{const x=M[`${ano}-${String(i+1).padStart(2,"0")}`];if(!x)return;
+    f+=`<tr><td>${n}/${ano}</td><td class="n">${x.n}</td><td class="n">${brl(x.fat)}</td><td class="n">${maisCel(x.mais,x.fat-x.mais)}</td><td class="n">${brl(x.serv)}</td><td class="n">${brl(x.pec)}</td><td class="n">${brl(x.marg)}</td><td class="n">${brl(x.taxa)}</td><td class="n">${brl(x.lucro)}</td><td class="n">${x.desp?brl(x.desp):"–"}</td><td class="n"><b>${brl(x.lucro-x.desp)}</b></td><td class="n">${brl(x.fat/x.n)}</td></tr>`});
+  f+=`<tr><th>Total</th><th class="n">${t.n}</th><th class="n">${brl(t.fat)}</th><th class="n">${maisCel(t.mais,t.fat-t.mais)}</th><th class="n">${brl(t.serv)}</th><th class="n">${brl(t.pec)}</th><th class="n">${brl(t.marg)}</th><th class="n">${brl(t.taxa)}</th><th class="n">${brl(t.lucro)}</th><th class="n">${brl(t.desp)}</th><th class="n">${brl(t.lucro-t.desp)}</th><th class="n">${t.n?brl(t.fat/t.n):"–"}</th></tr>`;
+  $("#tFech").innerHTML=f;
+}
+function chart(id,type,data,opts={}){
+  if(!window.Chart){document.getElementById(id).parentElement.innerHTML='<p class="muted">Gráfico indisponível sem internet.</p>';return}
+  charts[id]?.destroy();
+  const base={responsive:true,maintainAspectRatio:false,interaction:{mode:"index",intersect:false},
+    plugins:{tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${brl0(c.raw)}`}}},
+    scales:type==="doughnut"?{}:{y:{ticks:{callback:v=>"R$ "+(v/1000).toLocaleString("pt-BR")+" mil"},grid:{color:"#eef0f3"}},x:{grid:{display:false}}}};
+  charts[id]=new Chart(document.getElementById(id),{type,data,options:{...base,...opts,plugins:{...base.plugins,...opts.plugins}}});
+}
+
+/* ---------- vendas ---------- */
+const fV=$("#fVenda");
+function calcVenda(){
+  const g=n=>+fV[n].value||0, tx=D.taxas[fV.metodo.value]??0;
+  // lucro = tudo que o cliente pagou − custo real das peças (peças − margem) − taxa
+  // = serviço + margem + valor cobrado a mais − taxa
+  const taxa=r2(g("cobrado")*tx), lucro=r2(g("cobrado")-g("pecas")+g("descPecas")-taxa);
+  const base=g("pecas")+g("servico"), dif=r2(g("cobrado")-base);
+  $("#vCalc").innerHTML=`Lucro = serviço ${brl(g("servico"))} + margem peças ${brl(g("descPecas"))}`+
+    (dif?` ${dif>0?"+":"−"} cobrado ${dif>0?"a mais":"a menos"} ${brl(Math.abs(dif))}${base?` (${dif>0?"+":"−"}${pct(Math.abs(dif)/base)})`:""}`:"")+
+    ` − taxa ${pct(tx)} ${brl(taxa)} = <b>${brl(lucro)}</b> · Você recebe <b>${brl(g("cobrado")-taxa)}</b>`;
+  return{taxa,lucro};
+}
+let cobradoManual=false, descManual=false;
+const margemPadrao=()=>D.margemPadrao??10;
+fV.addEventListener("input",e=>{
+  const n=e.target.name;
+  if(n==="cobrado")cobradoManual=true;
+  // margem = 10% das peças, até o valor em R$ ser alterado à mão
+  if(n==="descPecas")descManual=true;
+  if(n==="pecas"&&!descManual)fV.descPecas.value=r2((+fV.pecas.value||0)*margemPadrao()/100);
+  if((e.target.name==="pecas"||e.target.name==="servico")&&!cobradoManual)fV.cobrado.value=r2((+fV.pecas.value||0)+(+fV.servico.value||0));
+  calcVenda();
+});
+fV.metodo.onchange=calcVenda;
+$("#vInfoBtn").onclick=e=>{const box=$("#vInfo");box.hidden=!box.hidden;e.currentTarget.setAttribute("aria-expanded",!box.hidden)};
+function limparVenda(){fV.reset();fV.id.value="";fV.data.value=hoje();fV.metodo.value="Pix";cobradoManual=descManual=false;$("#vTitulo").textContent="Nova venda";calcVenda()}
+$("#vCancelar").onclick=limparVenda;
+fV.onsubmit=e=>{e.preventDefault();
+  const {taxa,lucro}=calcVenda();
+  const v={id:fV.id.value||novoId("v"),data:fV.data.value,cliente:nomeProprio(fV.cliente.value),pecas:r2(fV.pecas.value),descPecas:r2(fV.descPecas.value),
+    servico:r2(fV.servico.value),cobrado:r2(fV.cobrado.value),metodo:fV.metodo.value,taxa,lucro,obs:fV.obs.value.trim()};
+  const i=D.vendas.findIndex(x=>x.id===v.id); i>=0?D.vendas[i]=v:D.vendas.push(v);
+  D.vendas.sort((a,b)=>a.data.localeCompare(b.data));
+  $("#vMes").value=v.data.slice(0,7);
+  salvar();limparVenda();renderVendas();
+};
+function renderVendas(){
+  const mes=$("#vMes").value, q=$("#vBusca").value.toLowerCase();
+  const L=D.vendas.filter(v=>q?(v.cliente+" "+v.obs).toLowerCase().includes(q):v.data.startsWith(mes));
+  const aMais=v=>r2(v.cobrado-v.pecas-v.servico);
+  const s=L.reduce((t,v)=>(t.f+=v.cobrado,t.l+=v.lucro,t.t+=v.taxa,t.m+=aMais(v),t),{f:0,l:0,t:0,m:0});
+  $("#vResumo").innerHTML=`${L.length} vendas · Faturamento <b>${brl(s.f)}</b> · Lucro <b>${brl(s.l)}</b> · Cobrado a mais <b>${brl(s.m)}</b> · Taxas ${brl(s.t)}`+(q?" · busca em todos os meses":"");
+  const celMais=v=>{const m=aMais(v),b=v.pecas+v.servico;if(!m)return`<td class="n muted">–</td>`;
+    return`<td class="n" style="color:${m>0?"var(--ok)":"var(--bad)"}">${m>0?"+":"−"}${brl(Math.abs(m))}${b?` <span class="muted">(${m>0?"+":"−"}${pct(Math.abs(m)/b)})</span>`:""}</td>`};
+  $("#tVendas").innerHTML=`<tr><th>Data</th><th>Cliente</th><th class="n">Peças</th><th class="n">Margem peças</th><th class="n">Serviço</th><th class="n">Cobrado</th><th class="n">Cobrado a mais</th><th>Pagamento</th><th class="n">Taxa</th><th class="n">Lucro</th><th>Obs</th><th></th></tr>`+
+    L.slice().reverse().map(v=>`<tr><td>${fmtData(v.data)}</td><td>${esc(v.cliente)}</td><td class="n">${brl(v.pecas)}</td><td class="n">${brl(v.descPecas)}</td><td class="n">${brl(v.servico)}</td><td class="n"><b>${brl(v.cobrado)}</b></td>${celMais(v)}<td>${esc(v.metodo)}</td><td class="n">${brl(v.taxa)}</td><td class="n">${brl(v.lucro)}</td><td>${esc(v.obs)}</td>
+    <td><button class="btn sm sec2" onclick="editarVenda('${v.id}')">Editar</button> <button class="btn sm del" onclick="apagar('vendas','${v.id}')">✕</button></td></tr>`).join("");
+}
+window.editarVenda=id=>{const v=D.vendas.find(x=>x.id===id);for(const k in v)if(fV[k])fV[k].value=v[k];cobradoManual=descManual=true;$("#vTitulo").textContent="Editando venda de "+v.cliente;calcVenda();window.scrollTo({top:0,behavior:"smooth"})};
+window.apagar=(col,id)=>{if(!confirm("Apagar este lançamento?"))return;D[col]=D[col].filter(x=>x.id!==id);salvar();render()};
+$("#vMes").oninput=renderVendas;$("#vBusca").oninput=renderVendas;
+
+/* ---------- despesas ---------- */
+const fD=$("#fDesp");
+fD.onsubmit=e=>{e.preventDefault();
+  const d={id:fD.id.value||novoId("d"),data:fD.data.value,categoria:fD.categoria.value,descricao:fD.descricao.value.trim(),valor:r2(fD.valor.value)};
+  const i=D.despesas.findIndex(x=>x.id===d.id);i>=0?D.despesas[i]=d:D.despesas.push(d);
+  $("#dMes").value=d.data.slice(0,7);salvar();fD.reset();fD.id.value="";fD.data.value=hoje();renderDesp();
+};
+$("#dCancelar").onclick=()=>{fD.reset();fD.id.value="";fD.data.value=hoje()};
+$("#dCopiar").onclick=()=>{
+  const mes=$("#dMes").value;const [y,m]=mes.split("-").map(Number);const ant=new Date(y,m-2,1).toLocaleDateString("sv-SE").slice(0,7);
+  const fixas=D.despesas.filter(d=>d.data.startsWith(ant)&&["MEI","INSS","Combustível"].includes(d.categoria));
+  if(!fixas.length)return alert("Nenhuma despesa fixa em "+ant);
+  if(D.despesas.some(d=>d.data.startsWith(mes)&&["MEI","INSS","Combustível"].includes(d.categoria))&&!confirm("Este mês já tem despesas fixas. Copiar mesmo assim?"))return;
+  fixas.forEach(d=>D.despesas.push({...d,id:novoId("d"),data:mes+"-01"}));salvar();renderDesp();
+};
+window.editarDesp=id=>{const d=D.despesas.find(x=>x.id===id);for(const k in d)if(fD[k])fD[k].value=d[k];window.scrollTo({top:0,behavior:"smooth"})};
+function renderDesp(){
+  const mes=$("#dMes").value, L=D.despesas.filter(d=>d.data.startsWith(mes));
+  const tot=L.reduce((s,d)=>s+d.valor,0);
+  $("#tDesp").innerHTML=`<tr><th>Data</th><th>Categoria</th><th>Descrição</th><th class="n">Valor</th><th></th></tr>`+
+    L.map(d=>`<tr><td>${fmtData(d.data)}</td><td>${esc(d.categoria)}</td><td>${esc(d.descricao)}</td><td class="n">${brl(d.valor)}</td><td><button class="btn sm sec2" onclick="editarDesp('${d.id}')">Editar</button> <button class="btn sm del" onclick="apagar('despesas','${d.id}')">✕</button></td></tr>`).join("")+
+    `<tr><th colspan="3">Total do mês</th><th class="n">${brl(tot)}</th><th></th></tr>`;
+}
+$("#dMes").oninput=renderDesp;
+
+/* ---------- clientes ---------- */
+const norm=s=>s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().trim();
+function porCliente(){
+  const c={};for(const v of D.vendas){const k=norm(v.cliente);const x=c[k]??={nome:v.cliente,n:0,fat:0,lucro:0,ult:"",prim:v.data};x.n++;x.fat+=v.cobrado;x.lucro+=v.lucro;if(v.data>x.ult){x.ult=v.data;x.nome=v.cliente}}
+  return Object.values(c);
+}
+function renderClientes(){
+  const C=porCliente(), hj=new Date();
+  const dias=d=>Math.round((hj-new Date(d))/864e5);
+  $("#tTop").innerHTML=`<tr><th>Cliente</th><th class="n">Visitas</th><th class="n">Total gasto</th><th class="n">Lucro</th><th>Última</th></tr>`+
+    C.sort((a,b)=>b.fat-a.fat).slice(0,40).map(x=>`<tr><td>${esc(x.nome)}</td><td class="n">${x.n}</td><td class="n">${brl0(x.fat)}</td><td class="n">${brl0(x.lucro)}</td><td>${fmtData(x.ult)}</td></tr>`).join("");
+  const lim=+$("#cDias").value||180;
+  $("#tSumidos").innerHTML=`<tr><th>Cliente</th><th class="n">Visitas</th><th class="n">Total gasto</th><th>Última</th><th class="n">Dias</th></tr>`+
+    C.filter(x=>x.n>=2&&dias(x.ult)>lim&&dias(x.ult)<lim+730).sort((a,b)=>b.fat-a.fat).map(x=>`<tr><td>${esc(x.nome)}</td><td class="n">${x.n}</td><td class="n">${brl0(x.fat)}</td><td>${fmtData(x.ult)}</td><td class="n">${dias(x.ult)}</td></tr>`).join("");
+  const q=norm($("#cBusca").value||"");
+  if(q){const L=D.vendas.filter(v=>norm(v.cliente)===q);
+    $("#cHist").innerHTML=L.length?`<p>${L.length} visitas · total ${brl(L.reduce((s,v)=>s+v.cobrado,0))}</p><table><tr><th>Data</th><th class="n">Peças</th><th class="n">Serviço</th><th class="n">Cobrado</th><th>Pagamento</th><th>Obs</th></tr>`+
+      L.slice().reverse().map(v=>`<tr><td>${fmtData(v.data)}</td><td class="n">${brl(v.pecas)}</td><td class="n">${brl(v.servico)}</td><td class="n">${brl(v.cobrado)}</td><td>${esc(v.metodo)}</td><td>${esc(v.obs)}</td></tr>`).join("")+"</table>":`<p class="muted">Nenhuma venda para esse nome.</p>`}
+}
+$("#cDias").oninput=renderClientes;$("#cBusca").oninput=renderClientes;
+
+/* ---------- pendências ---------- */
+const fP=$("#fPend");
+fP.onsubmit=e=>{e.preventDefault();
+  const p={id:fP.id.value||novoId("p")};for(const k of ["cliente","data","descricao","status","dataResolucao","obs"])p[k]=fP[k].value.trim();p.cliente=nomeProprio(p.cliente);p.valor=r2(fP.valor.value);
+  if(p.status==="Resolvido"&&!p.dataResolucao)p.dataResolucao=hoje();
+  const i=D.pendencias.findIndex(x=>x.id===p.id);i>=0?D.pendencias[i]=p:D.pendencias.push(p);salvar();fP.reset();fP.id.value="";fP.data.value=hoje();renderPend();
+};
+$("#pCancelar").onclick=()=>{fP.reset();fP.id.value="";fP.data.value=hoje()};
+window.editarPend=id=>{const p=D.pendencias.find(x=>x.id===id);for(const k in p)if(fP[k])fP[k].value=p[k];window.scrollTo({top:0,behavior:"smooth"})};
+function renderPend(){
+  const ab=D.pendencias.filter(p=>p.status!=="Resolvido");
+  $("#pResumo").innerHTML=`Em aberto: <b>${ab.length}</b> · Total devido <b>${brl(ab.reduce((s,p)=>s+p.valor,0))}</b>`;
+  const dias=p=>Math.round(((p.dataResolucao?new Date(p.dataResolucao):new Date())-new Date(p.data))/864e5);
+  $("#tPend").innerHTML=`<tr><th>Cliente</th><th>Data</th><th class="n">Valor</th><th>Problema</th><th>Status</th><th class="n">Dias</th><th>Obs</th><th></th></tr>`+
+    D.pendencias.slice().sort((a,b)=>(a.status==="Resolvido")-(b.status==="Resolvido")||a.data.localeCompare(b.data)).map(p=>`<tr><td>${esc(p.cliente)}</td><td>${fmtData(p.data)}</td><td class="n">${brl(p.valor)}</td><td>${esc(p.descricao)}</td>
+    <td><span class="tag ${p.status==="Resolvido"?"ok":"aberto"}">${esc(p.status)}</span></td><td class="n">${dias(p)}</td><td>${esc(p.obs)}</td>
+    <td><button class="btn sm sec2" onclick="editarPend('${p.id}')">Editar</button> <button class="btn sm del" onclick="apagar('pendencias','${p.id}')">✕</button></td></tr>`).join("");
+}
+
+/* ---------- dízimo ---------- */
+const NDIZ=4;
+// Mês sem dízimo lançado = automático: 1º valor "Oficina" = lucro − despesas do mês.
+// Um item com auto:true acompanha o lucro sozinho; digitar um valor desliga o automático.
+// Excluir grava o mês com a lista vazia (não volta a ser automático).
+let _M=null; const MM=()=>_M??=agregar();
+const lucroMenosDesp=m=>{const x=MM()[m];return x?r2(x.lucro-x.desp):0};
+function dizMes(m){
+  const rec=D.dizimos[m], z=rec?rec.itens:[{nome:"Oficina",auto:true}];
+  return Array.from({length:NDIZ},(_,i)=>{const x=z[i]||{};return{nome:x.nome||"",auto:!!x.auto,valor:x.auto?lucroMenosDesp(m):(x.valor||0)}});
+}
+const dizimoDe=m=>r2(dizMes(m).reduce((s,x)=>s+x.valor,0)*0.1);
+const mesesComDados=()=>[...new Set([...Object.keys(MM()),...Object.keys(D.dizimos)])].sort();
+function gravarDiz(mes,it){D.dizimos[mes]={itens:it.filter(x=>x.nome||x.valor||x.auto).map(x=>x.auto?{nome:x.nome,auto:true}:{nome:x.nome,valor:x.valor})};salvar()}
+function renderDizimo(){
+  const mes=$("#zMes").value, it=dizMes(mes), rec=D.dizimos[mes];
+  $("#tDiz").innerHTML=`<tr><th>Descrição</th><th class="n">Valor (R$)</th><th class="n">10%</th></tr>`+
+    it.map((x,i)=>`<tr><td><input data-i="${i}" data-k="nome" value="${esc(x.nome)}" placeholder="Valor ${i+1}"></td>
+      <td class="n">${i===0?`<label style="flex-direction:row;align-items:center;gap:4px;display:inline-flex;margin-right:6px" title="Usa o lucro − despesas do mês e acompanha as alterações"><input type="checkbox" id="zAuto" ${x.auto?"checked":""}>auto</label>`:""}<input data-i="${i}" data-k="valor" type="number" step="0.01" min="0" value="${x.valor||""}" ${x.auto?"disabled":""} style="width:130px;text-align:right"></td>
+      <td class="n" id="z10-${i}">${brl(x.valor*0.1)}</td></tr>`).join("")+
+    `<tr><th>Total dos valores</th><th class="n" id="zTot"></th><th></th></tr>
+     <tr><th>Total do dízimo (10%)</th><th></th><th class="n" id="zTot10" style="font-size:16px"></th></tr>`;
+  $("#zLucro").innerHTML=`Lucro da oficina − despesas neste mês: <b>${brl(lucroMenosDesp(mes))}</b>. `+
+    (!rec?"Este mês ainda não foi editado: o dízimo está no automático.":rec.itens.length?"":"O dízimo deste mês foi excluído.")+
+    ` <button class="btn sm sec2" id="zReset">Voltar ao automático</button> <button class="btn sm del" id="zExcluir">Excluir dízimo do mês</button>`;
+  $("#zAuto").onchange=e=>{it[0].auto=e.target.checked;if(it[0].auto&&!it[0].nome)it[0].nome="Oficina";if(!it[0].auto)it[0].valor=lucroMenosDesp(mes);gravarDiz(mes,it);renderDizimo()};
+  $("#zReset").onclick=()=>{delete D.dizimos[mes];salvar();renderDizimo()};
+  $("#zExcluir").onclick=()=>excluirDizimo(mes);
+  totaisDizimo(it);renderDizHist();
+}
+function excluirDizimo(mes){if(!confirm(`Excluir o dízimo de ${MESES[+mes.slice(5)-1]}/${mes.slice(0,4)}?`))return;D.dizimos[mes]={itens:[]};salvar();render()}
+function totaisDizimo(it){const t=it.reduce((s,x)=>s+(+x.valor||0),0);$("#zTot").textContent=brl(t);$("#zTot10").textContent=brl(t*0.1)}
+$("#tDiz").addEventListener("input",e=>{
+  const el=e.target;if(!el.dataset.k)return;
+  const mes=$("#zMes").value, it=dizMes(mes);
+  it[el.dataset.i][el.dataset.k]=el.dataset.k==="valor"?r2(el.value):el.value.trim();
+  if(el.dataset.k==="valor")$("#z10-"+el.dataset.i).textContent=brl(it[el.dataset.i].valor*0.1);
+  totaisDizimo(it);gravarDiz(mes,it);renderDizHist();
+});
+function renderDizHist(){
+  const ms=mesesComDados().reverse();let ano=null,h=`<tr><th>Mês</th>${Array.from({length:NDIZ},(_,i)=>`<th class="n">Valor ${i+1}</th>`).join("")}<th class="n">Total</th><th class="n">Dízimo (10%)</th></tr>`;
+  const totAno={};ms.forEach(m=>{const t=dizMes(m).reduce((s,x)=>s+x.valor,0);totAno[m.slice(0,4)]=(totAno[m.slice(0,4)]||0)+t});
+  ms.forEach(m=>{const it=dizMes(m),t=it.reduce((s,x)=>s+x.valor,0),a=m.slice(0,4);
+    if(a!==ano){ano=a;h+=`<tr><th>${a}</th>${"<th></th>".repeat(NDIZ)}<th class="n">${brl(totAno[a])}</th><th class="n">${brl(totAno[a]*0.1)}</th></tr>`}
+    h+=`<tr style="cursor:pointer" onclick="$('#zMes').value='${m}';renderDizimo();scrollTo({top:0,behavior:'smooth'})"><td>${MESES[+m.slice(5)-1]}/${a}</td>${it.map(x=>`<td class="n">${x.valor?`<span class="muted">${esc(x.nome)}</span> ${brl(x.valor)}`:"–"}</td>`).join("")}<td class="n">${brl(t)}</td><td class="n"><b>${brl(t*0.1)}</b></td></tr>`});
+  $("#tDizHist").innerHTML=h;
+}
+$("#zMes").oninput=renderDizimo;
+
+/* ---------- resumo ---------- */
+// lucro das vendas − despesas − dízimo = lucro líquido
+function resumoMes(M,mes){
+  const x=M[mes]||{lucro:0,desp:0,n:0};
+  const diz=dizimoDe(mes);
+  return{lucro:x.lucro,desp:x.desp,diz,aposDesp:x.lucro-x.desp,liquido:x.lucro-x.desp-diz,n:x.n};
+}
+function renderResumo(){
+  const M=agregar(), mes=$("#rMes").value, r=resumoMes(M,mes);
+  const lin=(cls,l,v)=>`<tr class="${cls}"><td>${l}</td><td class="n">${brl(v)}</td></tr>`;
+  $("#tResumo").innerHTML=
+    lin("","Lucro da oficina",r.lucro)+
+    lin("sub","− Despesas",-r.desp)+
+    lin("parcial","Lucro oficina − despesas",r.aposDesp)+
+    lin("sub","− Dízimo",-r.diz)+
+    lin("parcial","Lucro oficina − despesas − dízimo",r.liquido)+
+    `<tr class="final"><td>Lucro líquido</td><td class="n" style="color:${r.liquido<0?"var(--bad)":"var(--ok)"}">${brl(r.liquido)}</td></tr>`;
+  const avisos=[];
+  if(!r.n)avisos.push("Nenhuma venda neste mês.");
+  if(!r.desp)avisos.push("Nenhuma despesa lançada neste mês.");
+  if(!r.diz)avisos.push("Nenhum dízimo lançado neste mês (aba Dízimo).");
+  $("#rObs").textContent=avisos.join(" ");
+  // tabela do ano
+  const sel=$("#rAno");
+  if(!sel.options.length){anos().forEach(a=>sel.add(new Option(a,a)));sel.value=mes.slice(0,4);sel.onchange=renderResumo}
+  const ano=sel.value, t={lucro:0,desp:0,aposDesp:0,diz:0,liquido:0};
+  let h=`<tr><th>Mês</th><th class="n">Lucro oficina</th><th class="n">Despesas</th><th class="n">Lucro − despesas</th><th class="n">Dízimo</th><th class="n">Lucro líquido</th><th></th></tr>`;
+  MESES.forEach((n,i)=>{const m=`${ano}-${String(i+1).padStart(2,"0")}`;if(!M[m]&&!D.dizimos[m])return;
+    const x=resumoMes(M,m);for(const k in t)t[k]+=x[k];
+    const auto=dizMes(m)[0].auto;
+    h+=`<tr><td style="cursor:pointer" onclick="$('#rMes').value='${m}';renderResumo();scrollTo({top:0,behavior:'smooth'})">${n}/${ano}</td><td class="n">${brl(x.lucro)}</td>
+      <td class="n"><a href="#" onclick="abrirMes('despesas','${m}');return false" title="Editar despesas">${x.desp?brl(x.desp):"–"}</a></td><td class="n">${brl(x.aposDesp)}</td>
+      <td class="n">${x.diz?brl(x.diz):"–"}${auto&&x.diz?' <span class="muted" title="Calculado sozinho: 10% de lucro − despesas">auto</span>':""}</td><td class="n"><b>${brl(x.liquido)}</b></td>
+      <td><button class="btn sm sec2" onclick="abrirMes('dizimo','${m}')">Editar dízimo</button> <button class="btn sm del" onclick="excluirDizimo('${m}')" title="Excluir dízimo do mês">✕</button></td></tr>`});
+  h+=`<tr><th>Total ${ano}</th><th class="n">${brl(t.lucro)}</th><th class="n">${brl(t.desp)}</th><th class="n">${brl(t.aposDesp)}</th><th class="n">${brl(t.diz)}</th><th class="n">${brl(t.liquido)}</th><th></th></tr>`;
+  $("#tResumoAno").innerHTML=h;
+}
+$("#rMes").oninput=()=>{$("#rAno").value=$("#rMes").value.slice(0,4);renderResumo()};
+window.abrirMes=(aba,m)=>{({dizimo:"#zMes",despesas:"#dMes"})[aba]&&($(({dizimo:"#zMes",despesas:"#dMes"})[aba]).value=m);
+  document.querySelector(`#nav [data-s=${aba}]`).click();scrollTo({top:0,behavior:"smooth"})};
+
+/* ---------- Excel do mês ---------- */
+const MESES_EXT=["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+function planilha(linhas,larguras,colsMoeda=[],colsPct=[]){
+  const ws=XLSX.utils.aoa_to_sheet(linhas);
+  ws["!cols"]=larguras.map(w=>({wch:w}));
+  for(const ref in ws){if(ref[0]==="!")continue;const c=XLSX.utils.decode_cell(ref),cel=ws[ref];
+    if(cel.t!=="n")continue;
+    if(colsMoeda.includes(c.c))cel.z='"R$" #,##0.00';else if(colsPct.includes(c.c))cel.z="0.00%"}
+  return ws;
+}
+function montarExcel(mes){
+  const [ano,m]=mes.split("-"), nomeMes=MESES_EXT[+m-1];
+  const V=D.vendas.filter(v=>v.data.startsWith(mes)), De=D.despesas.filter(d=>d.data.startsWith(mes));
+  const dataBR=s=>{const [y,mm,dd]=s.split("-").map(Number);return (Date.UTC(y,mm-1,dd)-Date.UTC(1899,11,30))/864e5};// número de série do Excel, sem fuso horário
+  const wb=XLSX.utils.book_new();
+  const s=V.reduce((t,v)=>(t.f+=v.cobrado,t.l+=v.lucro,t.t+=v.taxa,t.s+=v.servico,t.p+=v.pecas,t.d+=v.descPecas,t),{f:0,l:0,t:0,s:0,p:0,d:0});
+  // Caixa: mesmo layout das planilhas antigas
+  const caixa=[[`${nomeMes} ${ano}`],["Cliente","Data","Margem em Peças (ganho)","Venda Peças","Serviço","Valor Cobrado","Metodo de Pagamento","Porcentagem","Taxa","Lucro","Obs"],
+    ...V.map(v=>[v.cliente,dataBR(v.data),v.descPecas,v.pecas,v.servico,v.cobrado,v.metodo,D.taxas[v.metodo]??0,v.taxa,v.lucro,v.obs]),
+    [],["TOTAL","",s.d,s.p,s.s,s.f,"","",s.t,s.l,""]];
+  const wC=planilha(caixa,[18,11,12,12,12,13,16,11,11,12,30],[2,3,4,5,8,9],[7]);
+  for(let i=2;i<2+V.length;i++){const r=XLSX.utils.encode_cell({r:i,c:1});if(wC[r])wC[r].z="dd/mm/yyyy"}
+  XLSX.utils.book_append_sheet(wb,wC,"Caixa");
+  const td=De.reduce((t,d)=>t+d.valor,0);
+  XLSX.utils.book_append_sheet(wb,planilha([["Data","Categoria","Descrição","Valor"],...De.map(d=>[fmtData(d.data),d.categoria,d.descricao,d.valor]),[],["TOTAL","","",td]],[11,22,30,13],[3]),"Despesas");
+  const it=dizMes(mes).filter(x=>x.nome||x.valor), tz=it.reduce((t,x)=>t+x.valor,0);
+  XLSX.utils.book_append_sheet(wb,planilha([["Descrição","Valor","10%"],...it.map(x=>[x.nome,x.valor,r2(x.valor*0.1)]),[],["Total dos valores",tz,""],["Total do dízimo (10%)","",r2(tz*0.1)]],[24,14,14],[1,2]),"Dízimo");
+  XLSX.utils.book_append_sheet(wb,planilha([[`Resumo ${nomeMes} ${ano}`,""],["Faturamento",s.f],["Serviço",s.s],["Peças",s.p],["Taxas de cartão",s.t],["Lucro das vendas",s.l],
+    ["Despesas",td],["Lucro final",s.l-td],["Qtd. vendas",V.length],["Ticket médio",V.length?s.f/V.length:0],["Margem",s.f?s.l/s.f:0],["Dízimo (10%)",r2(tz*0.1)],[],["Gerado pelo Painel da Oficina em "+new Date().toLocaleString("pt-BR"),""]],
+    [28,16],[]),"Resumo");
+  const wR=wb.Sheets.Resumo;for(let i=1;i<=11;i++){const c=wR[XLSX.utils.encode_cell({r:i,c:1})];if(c)c.z=i===8?"0":i===10?"0.0%":'"R$" #,##0.00'}
+  return {wb,nome:`${+m} - Mecanica Painel - ${nomeMes}.xlsx`,ano,n:V.length};
+}
+$("#vTrocaPasta").onclick=async e=>{e.preventDefault();await IDB.set("pastaRaiz",null);status('No próximo Excel o painel vai pedir a pasta de novo: escolha "Mecanica".')};
+$("#vExcel").onclick=async()=>{
+  if(!window.XLSX)return alert("Não foi possível carregar o gerador de Excel. Verifique a internet.");
+  const mes=$("#vMes").value;if(!mes)return alert("Escolha o mês.");
+  const {wb,nome,ano,n}=montarExcel(mes);
+  if(!n&&!confirm("Este mês não tem vendas. Gerar mesmo assim?"))return;
+  if(!window.showDirectoryPicker){XLSX.writeFile(wb,nome);return}
+  try{
+    let raiz=await IDB.get("pastaRaiz");
+    if(raiz&&await raiz.requestPermission({mode:"readwrite"})!=="granted")raiz=null;
+    if(!raiz){status('Escolha a pasta "Mecanica" (a que tem as pastas 2022, 2023…). Só é pedido uma vez.');
+      raiz=await showDirectoryPicker({id:"mecanica",mode:"readwrite"})}
+    // Escolheu a pasta de um ano (ex.: 2026) em vez da Mecanica: se for o ano certo, salva nela mesmo,
+    // mas não guarda como pasta padrão (na próxima vez pergunta de novo).
+    let pastaAno, caminho;
+    if(/^\d{4}$/.test(raiz.name)){
+      await IDB.set("pastaRaiz",null);
+      if(raiz.name!==ano){alert(`Você escolheu a pasta "${raiz.name}", mas este mês é de ${ano}.\nClique de novo em "Gerar Excel do mês" e escolha a pasta Mecanica.`);return}
+      pastaAno=raiz;caminho=raiz.name;
+    }else{
+      await IDB.set("pastaRaiz",raiz);
+      pastaAno=await raiz.getDirectoryHandle(ano,{create:true});caminho=`${raiz.name}\\${ano}`;
+    }
+    let existe=true;try{await pastaAno.getFileHandle(nome)}catch{existe=false}
+    if(existe&&!confirm(`"${nome}" já existe em ${caminho}. Substituir pela versão atual?`))return;
+    const fh=await pastaAno.getFileHandle(nome,{create:true}),w=await fh.createWritable();
+    await w.write(XLSX.write(wb,{bookType:"xlsx",type:"array"}));await w.close();
+    status(`Excel salvo em ${caminho}\\${nome}`);
+  }catch(e){if(e.name!=="AbortError")alert("Erro ao gerar o Excel: "+e.message)}
+};
+
+/* ---------- config ---------- */
+$("#cfgMargem").onchange=e=>{D.margemPadrao=r2(e.target.value);salvar()};
+function renderConfig(){
+  $("#cfgMargem").value=margemPadrao();
+  $("#tTaxas").innerHTML=`<tr><th>Forma</th><th class="n">Taxa (%)</th></tr>`+Object.entries(D.taxas).map(([k,v])=>
+    `<tr><td>${esc(k)}</td><td class="n"><input type="number" step="0.01" value="${r2(v*100)}" style="width:90px;text-align:right" onchange="D.taxas['${k}']=this.value/100;salvar()"></td></tr>`).join("");
+  $("#cfgInfo").innerHTML=`${D.vendas.length} vendas, ${D.despesas.length} despesas. Última alteração: ${D.atualizado?.replace("T"," ")||"–"}.`;
+}
+function baixar(nome,conteudo,tipo){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([conteudo],{type:tipo}));a.download=nome;a.click()}
+const csv=(L,cols)=>"﻿"+cols.join(";")+"\n"+L.map(x=>cols.map(c=>typeof x[c]==="number"?String(x[c]).replace(".",","):`"${String(x[c]??"").replace(/"/g,'""')}"`).join(";")).join("\n");
+$("#xVendas").onclick=()=>baixar("vendas.csv",csv(D.vendas,["data","cliente","pecas","descPecas","servico","cobrado","metodo","taxa","lucro","obs"]),"text/csv");
+$("#xDesp").onclick=()=>baixar("despesas.csv",csv(D.despesas,["data","categoria","descricao","valor"]),"text/csv");
+$("#xJson").onclick=()=>baixar("dados-"+hoje()+".json",JSON.stringify(D,null,1),"application/json");
+
+/* ---------- início ---------- */
+function iniciar(){
+  $("#gate").style.display="none";$("#app").style.display="";
+  if(!fonte)status("aberto sem permissão de gravar",true);else status(fonte.tipo==="drive"?"dados carregados do Google Drive":"dados carregados");
+  $("#selMetodo").innerHTML=Object.keys(D.taxas).map(k=>`<option>${esc(k)}</option>`).join("");
+  $("#selCat").innerHTML=CATS.map(k=>`<option>${k}</option>`).join("");
+  const mesAtual=hoje().slice(0,7);
+  D.dizimos??={};
+  $("#vMes").value=mesAtual;$("#dMes").value=mesAtual;$("#zMes").value=mesAtual;$("#rMes").value=mesAtual;
+  fD.data.value=hoje();fP.data.value=hoje();
+  limparVenda();render();
+}
+function render(){
+  if(!D)return;
+  _M=null;
+  const nomes=[...new Map(D.vendas.map(v=>[norm(v.cliente),v.cliente])).values()].sort();
+  $("#dlClientes").innerHTML=nomes.map(n=>`<option value="${esc(n)}">`).join("");
+  const s=document.querySelector(".sec.on").id;
+  ({"s-geral":renderGeral,"s-vendas":renderVendas,"s-despesas":renderDesp,"s-clientes":renderClientes,"s-pend":renderPend,"s-dizimo":renderDizimo,"s-resumo":renderResumo,"s-config":renderConfig})[s]();
+}
+</script>
+</body>
+</html>
