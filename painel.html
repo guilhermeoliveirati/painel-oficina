@@ -309,7 +309,10 @@ let D=null, fonte=null, charts={};
    - drive: o mesmo dados.json lido e gravado pela API do Google Drive (tablet, celular ou qualquer navegador)
    "versao" muda sempre que o arquivo muda; serve para não gravar por cima de alteração feita em outro lugar. */
 // Preencher com os dados do Google Cloud (ver LEIA-ME.md). O ID do cliente e a chave não são segredos.
-const GOOGLE={clientId:"", apiKey:"", appId:""};
+const GOOGLE={
+  clientId:"360236553841-i9c5vc2616hncno9grg13uvh97mc2iu9.apps.googleusercontent.com",
+  apiKey:"AIzaSyCdB_qViYAqEtscARgVzLdjwImMD9kN7pI", // restrita à Google Picker API
+  appId:"360236553841"};
 const driveConfigurado=()=>!!(GOOGLE.clientId&&GOOGLE.apiKey&&GOOGLE.appId);
 const LS={get(k){try{return JSON.parse(localStorage.getItem(k))}catch{return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch{}}};
 
