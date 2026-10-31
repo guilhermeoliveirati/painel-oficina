@@ -85,7 +85,7 @@ table.resumo tr.final td{font-size:18px;font-weight:700;border-top:2px solid var
 
 <div id="gate" class="card">
   <h2>Abrir os dados</h2>
-  <p>Os dados ficam no arquivo <b>dados.json</b>, na pasta Meu Drive › Mecanica › Painel. Ele é salvo automaticamente a cada alteração, e o Google Drive faz o backup.</p>
+  <p class="orienta">Os dados ficam no arquivo <b>dados.json</b>, na pasta Meu Drive › Mecanica › Painel. Ele é salvo automaticamente a cada alteração, e o Google Drive faz o backup.</p>
   <div class="row" style="justify-content:center">
     <button class="btn" id="btnReabrir" style="display:none">Continuar com dados.json</button>
     <button class="btn" id="btnAbrir">📁 Escolher dados.json deste computador…</button>
@@ -95,9 +95,9 @@ table.resumo tr.final td{font-size:18px;font-weight:700;border-top:2px solid var
       <button class="btn" id="btnDrive">☁️ Abrir pelo Google Drive</button>
       <button class="btn sec2" id="btnDriveOutro" style="display:none">Escolher outro arquivo no Drive…</button>
     </div>
-    <p class="muted">Use no tablet ou celular: entra com sua conta Google e escolhe o dados.json uma vez.</p>
+    <p class="muted orienta">Use no tablet ou celular: entra com sua conta Google e escolhe o dados.json uma vez.</p>
   </div>
-  <p class="muted" id="gateMsg">Use Chrome ou Edge. Só na primeira vez é preciso escolher o arquivo; depois o painel abre o mesmo dados.json sozinho.</p>
+  <p class="muted" id="gateMsg"><span class="orienta">Use Chrome ou Edge. Só na primeira vez é preciso escolher o arquivo; depois o painel abre o mesmo dados.json sozinho.</span></p>
 </div>
 
 <main id="app" style="display:none">
@@ -272,6 +272,9 @@ table.resumo tr.final td{font-size:18px;font-weight:700;border-top:2px solid var
       <p class="muted">É a % que já vem preenchida em cada venda nova. Em cada venda você ainda pode mudar.</p></div>
     <div class="card"><h2>Taxas da maquininha</h2><table id="tTaxas"></table>
       <p class="muted">Ao mudar uma taxa, só as vendas novas usam o valor novo.</p></div>
+    <div class="card"><h2>Tamanho da letra</h2>
+      <div class="row" id="cfgFonte"></div>
+      <p class="muted">Vale só para este aparelho (computador e tablet podem ter tamanhos diferentes).</p></div>
     <div class="card"><h2>Arquivo e exportação</h2>
       <p class="muted" id="cfgInfo"></p>
       <div class="row">
@@ -368,7 +371,7 @@ async function escolherNoDrive(){
 /* --- abrir --- */
 let versaoConhecida=null;
 async function abrirFonte(f){
-  const r=await f.ler();fonte=f;D=r.dados;versaoConhecida=r.versao;iniciar();
+  const r=await f.ler();fonte=f;D=r.dados;versaoConhecida=r.versao;LS.set("jaAbriu",true);iniciar();
 }
 async function abrirLocal(h){
   if(await h.queryPermission({mode:"readwrite"})!=="granted" && await h.requestPermission({mode:"readwrite"})!=="granted") throw new Error("Permissão negada");
@@ -811,8 +814,17 @@ $("#vExcel").onclick=async()=>{
 };
 
 /* ---------- config ---------- */
+// Tamanho da letra: zoom da página inteira, guardado só neste aparelho.
+const TAMANHOS=[["Pequena",.9],["Normal",1],["Grande",1.15],["Maior",1.3],["Muito grande",1.5]];
+function aplicarFonte(z){document.body.style.zoom=z;LS.set("zoom",z);charts&&Object.values(charts).forEach(c=>c.resize?.())}
+function renderFonte(){const z=LS.get("zoom")||1;
+  $("#cfgFonte").innerHTML=TAMANHOS.map(([n,v])=>`<button class="btn ${v===z?"":"sec2"}" style="font-size:${14*v}px" onclick="aplicarFonte(${v});renderFonte()">${n}</button>`).join("")}
+aplicarFonte(LS.get("zoom")||1);
+// Orientação de onde está o dados.json: só aparece até o arquivo ser aberto pela primeira vez neste aparelho.
+if(LS.get("jaAbriu"))document.querySelectorAll(".orienta").forEach(e=>e.remove());
 $("#cfgMargem").onchange=e=>{D.margemPadrao=r2(e.target.value);salvar()};
 function renderConfig(){
+  renderFonte();
   $("#cfgMargem").value=margemPadrao();
   $("#tTaxas").innerHTML=`<tr><th>Forma</th><th class="n">Taxa (%)</th></tr>`+Object.entries(D.taxas).map(([k,v])=>
     `<tr><td>${esc(k)}</td><td class="n"><input type="number" step="0.01" value="${r2(v*100)}" style="width:90px;text-align:right" onchange="D.taxas['${k}']=this.value/100;salvar()"></td></tr>`).join("");
