@@ -25,12 +25,17 @@ header{position:sticky;top:0;z-index:5;background:#1d2330;color:#fff;padding:12p
 nav{display:flex;gap:4px;flex-wrap:wrap}
 nav button{background:transparent;border:0;color:#cbd5e1;padding:8px 12px;border-radius:6px;cursor:pointer;font:inherit}
 nav button.on{background:#334155;color:#fff}
-/* Topo fino: uma linha só com o menu (rola para o lado se não couber) e o status na ponta */
-header{padding:4px 10px;gap:8px;flex-wrap:nowrap}
-nav{flex:1;min-width:0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-nav::-webkit-scrollbar{display:none}
-nav button{padding:6px 10px;white-space:nowrap;flex:none}
+/* Topo: no computador, uma linha; em telas estreitas (tablet em pé), duas linhas de 4 botões, com o status na última casa */
+header{padding:8px 12px;gap:8px}
+nav button{white-space:nowrap}
 #status{white-space:nowrap}
+@media (max-width:900px){
+  header{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:12px 12px 10px}
+  nav{display:contents}
+  nav button{padding:10px 6px;text-align:center}
+  #status{margin:0;align-self:center;justify-self:center}
+  #reconectar{grid-column:1/-1}
+}
 main{max-width:1200px;margin:0 auto;padding:20px 16px}
 .sec{display:none}.sec.on{display:block}
 .card{background:var(--card);border:1px solid var(--brd);border-radius:10px;padding:16px;margin-bottom:16px}
@@ -314,7 +319,7 @@ const hoje=()=>new Date().toLocaleDateString("sv-SE");
 const fmtData=d=>d?d.split("-").reverse().join("/"):"";
 
 // Versão do painel: aumentar a cada ajuste (ver MEMORIA.md › Versões).
-const VERSAO="1.8.0";
+const VERSAO="1.8.1";
 document.getElementById("versao").textContent=VERSAO;
 
 let D=null, fonte=null, charts={};
@@ -482,7 +487,6 @@ const novoId=p=>p+(D.proximoId++);
 /* ---------- navegação ---------- */
 $("#nav").onclick=e=>{const b=e.target.closest("button");if(!b)return;
   document.querySelectorAll("#nav button").forEach(x=>x.classList.toggle("on",x===b));
-  b.scrollIntoView({block:"nearest",inline:"nearest"});
   document.querySelectorAll(".sec").forEach(s=>s.classList.toggle("on",s.id==="s-"+b.dataset.s));
   render();
 };
