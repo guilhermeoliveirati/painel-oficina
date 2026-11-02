@@ -79,7 +79,6 @@ table.resumo tr.final td{font-size:18px;font-weight:700;border-top:2px solid var
     <button data-s="vendas">Vendas</button>
     <button data-s="despesas">Despesas</button>
     <button data-s="clientes">Clientes</button>
-    <button data-s="pend">Pendências</button>
     <button data-s="dizimo">Dízimo</button>
     <button data-s="resumo">Resumo</button>
     <button data-s="config">Config</button>
@@ -220,25 +219,6 @@ table.resumo tr.final td{font-size:18px;font-weight:700;border-top:2px solid var
     <div id="cHist" style="margin-top:10px"></div></div>
 </section>
 
-<!-- PENDÊNCIAS -->
-<section class="sec" id="s-pend">
-  <div class="card">
-    <h2>Inadimplentes / problemas</h2>
-    <form class="f" id="fPend" autocomplete="off">
-      <input type="hidden" name="id">
-      <label>Cliente<input name="cliente" list="dlClientes" required></label>
-      <label>Data<input name="data" type="date" required></label>
-      <label>Valor devido (R$)<input name="valor" type="number" step="0.01" min="0" required></label>
-      <label>Problema<input name="descricao"></label>
-      <label>Status<select name="status"><option>Em aberto</option><option>Resolvido</option></select></label>
-      <label>Data resolução<input name="dataResolucao" type="date"></label>
-      <label>Obs<input name="obs"></label>
-      <div class="row"><button class="btn" type="submit">Salvar</button><button class="btn sec2" type="button" id="pCancelar">Limpar</button></div>
-    </form>
-  </div>
-  <div class="card"><div id="pResumo" class="muted" style="margin-bottom:8px"></div><div class="scroll"><table id="tPend"></table></div></div>
-</section>
-
 <!-- DÍZIMO -->
 <section class="sec" id="s-dizimo">
   <div class="card" style="max-width:640px">
@@ -324,7 +304,7 @@ const hoje=()=>new Date().toLocaleDateString("sv-SE");
 const fmtData=d=>d?d.split("-").reverse().join("/"):"";
 
 // Versão do painel: aumentar a cada ajuste (ver MEMORIA.md › Versões).
-const VERSAO="1.5.3";
+const VERSAO="1.6.0";
 document.getElementById("versao").textContent=VERSAO;
 
 let D=null, fonte=null, charts={};
@@ -361,11 +341,14 @@ async function loginGoogle(){ // precisa vir de um toque/clique (abre a janela d
   await carregarScript("https://accounts.google.com/gsi/client");
   await new Promise((ok,err)=>{
     google.accounts.oauth2.initTokenClient({client_id:GOOGLE.clientId,scope:"https://www.googleapis.com/auth/drive.file",
+      ...(LS.get("gEmail")?{hint:LS.get("gEmail")}:{}), // já escolhe a conta usada da última vez
       callback:r=>{if(r.error)return err(new Error(r.error_description||r.error));gToken={t:r.access_token,exp:Date.now()+r.expires_in*1000};LS.set("gToken",gToken);ok()},
       error_callback:e=>err(new Error(e.type==="popup_closed"?"janela do Google fechada":"login não concluído ("+e.type+")"))
     }).requestAccessToken({prompt:LS.get("gJaAutorizou")?"":"consent"});
   });
   LS.set("gJaAutorizou",true);
+  // guarda qual conta entrou, para não perguntar de novo na próxima vez
+  if(!LS.get("gEmail"))try{const u=await (await api("https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)")).json();if(u.user?.emailAddress)LS.set("gEmail",u.user.emailAddress)}catch{}
 }
 async function api(url,op={}){
   if(!tokenValido())throw new ErroLogin("sessão do Google expirada");
@@ -662,25 +645,6 @@ function renderClientes(){
       L.slice().reverse().map(v=>`<tr><td>${fmtData(v.data)}</td><td class="n">${brl(v.pecas)}</td><td class="n">${brl(v.servico)}</td><td class="n">${brl(v.cobrado)}</td><td>${esc(v.metodo)}</td><td>${esc(v.obs)}</td></tr>`).join("")+"</table>":`<p class="muted">Nenhuma venda para esse nome.</p>`}
 }
 $("#cDias").oninput=renderClientes;$("#cBusca").oninput=renderClientes;
-
-/* ---------- pendências ---------- */
-const fP=$("#fPend");
-fP.onsubmit=e=>{e.preventDefault();
-  const p={id:fP.id.value||novoId("p")};for(const k of ["cliente","data","descricao","status","dataResolucao","obs"])p[k]=fP[k].value.trim();p.cliente=nomeProprio(p.cliente);p.valor=r2(fP.valor.value);
-  if(p.status==="Resolvido"&&!p.dataResolucao)p.dataResolucao=hoje();
-  const i=D.pendencias.findIndex(x=>x.id===p.id);i>=0?D.pendencias[i]=p:D.pendencias.push(p);salvar();fP.reset();fP.id.value="";fP.data.value=hoje();renderPend();
-};
-$("#pCancelar").onclick=()=>{fP.reset();fP.id.value="";fP.data.value=hoje()};
-window.editarPend=id=>{const p=D.pendencias.find(x=>x.id===id);for(const k in p)if(fP[k])fP[k].value=p[k];window.scrollTo({top:0,behavior:"smooth"})};
-function renderPend(){
-  const ab=D.pendencias.filter(p=>p.status!=="Resolvido");
-  $("#pResumo").innerHTML=`Em aberto: <b>${ab.length}</b> · Total devido <b>${brl(ab.reduce((s,p)=>s+p.valor,0))}</b>`;
-  const dias=p=>Math.round(((p.dataResolucao?new Date(p.dataResolucao):new Date())-new Date(p.data))/864e5);
-  $("#tPend").innerHTML=`<tr><th>Cliente</th><th>Data</th><th class="n">Valor</th><th>Problema</th><th>Status</th><th class="n">Dias</th><th>Obs</th><th></th></tr>`+
-    D.pendencias.slice().sort((a,b)=>(a.status==="Resolvido")-(b.status==="Resolvido")||a.data.localeCompare(b.data)).map(p=>`<tr><td>${esc(p.cliente)}</td><td>${fmtData(p.data)}</td><td class="n">${brl(p.valor)}</td><td>${esc(p.descricao)}</td>
-    <td><span class="tag ${p.status==="Resolvido"?"ok":"aberto"}">${esc(p.status)}</span></td><td class="n">${dias(p)}</td><td>${esc(p.obs)}</td>
-    <td><button class="btn sm sec2" onclick="editarPend('${p.id}')">Editar</button> <button class="btn sm del" onclick="apagar('pendencias','${p.id}')">✕</button></td></tr>`).join("");
-}
 
 /* ---------- venda por voz (Gemini) ----------
    A fala vira texto no próprio navegador; a Gemini transforma o texto nos campos da venda.
@@ -998,7 +962,7 @@ function iniciar(){
   const mesAtual=hoje().slice(0,7);
   D.dizimos??={};
   $("#vMes").value=mesAtual;$("#dMes").value=mesAtual;$("#zMes").value=mesAtual;$("#rMes").value=mesAtual;
-  fD.data.value=hoje();fP.data.value=hoje();
+  fD.data.value=hoje();
   limparVenda();render();
 }
 function render(){
@@ -1007,7 +971,7 @@ function render(){
   const nomes=[...new Map(D.vendas.map(v=>[norm(v.cliente),v.cliente])).values()].sort();
   $("#dlClientes").innerHTML=nomes.map(n=>`<option value="${esc(n)}">`).join("");
   const s=document.querySelector(".sec.on").id;
-  ({"s-geral":renderGeral,"s-vendas":renderVendas,"s-despesas":renderDesp,"s-clientes":renderClientes,"s-pend":renderPend,"s-dizimo":renderDizimo,"s-resumo":renderResumo,"s-config":renderConfig})[s]();
+  ({"s-geral":renderGeral,"s-vendas":renderVendas,"s-despesas":renderDesp,"s-clientes":renderClientes,"s-dizimo":renderDizimo,"s-resumo":renderResumo,"s-config":renderConfig})[s]();
 }
 </script>
 </body>

@@ -46,7 +46,7 @@ O painel tem duas "fontes" com a mesma interface (`ler()`, `versao()`, `gravar(j
   O identificador do arquivo fica no IndexedDB (`painel-oficina` › `kv` › `handle`). Confere mudanças a cada 5 s.
 - **drive** — qualquer navegador (tablet). Login Google Identity Services (token, escopo `drive.file`) + Google Picker para escolher o arquivo uma vez;
   lê/grava pela Drive API v3 (`files/{id}?alt=media` e `upload ... uploadType=media`). Token dura ~1 h (botão "Entrar no Google de novo"). Confere a cada 15 s.
-  Guardado no `localStorage`: `modo`, `driveArquivo`, `gToken`, `gJaAutorizou`, `jaAbriu`, `zoom`.
+  Guardado no `localStorage`: `modo`, `driveArquivo`, `gToken`, `gJaAutorizou`, `gEmail` (conta usada, vira `hint` no login para não pedir a conta de novo), `jaAbriu`, `zoom`.
 
 **Proteção contra sobrescrita:** antes de gravar, compara a versão atual do arquivo (`lastModified` ou `version` do Drive) com a última conhecida;
 se mudou fora do painel, recarrega e avisa em vez de gravar por cima. Gravações vão numa fila (`salvar()`), uma por vez.
@@ -62,7 +62,7 @@ se mudou fora do painel, recarrega e avisa em vez de gravar por cima. Gravaçõe
   "margemPadrao": 10,                // opcional; % de margem em peças sugerida (padrão 10)
   "vendas": [ { "id", "data": "AAAA-MM-DD", "cliente", "pecas", "descPecas", "servico", "cobrado", "metodo", "taxa", "lucro", "obs" } ],
   "despesas": [ { "id", "data", "categoria", "descricao", "valor" } ],
-  "pendencias": [ { "id", "cliente", "data", "valor", "descricao", "status": "Em aberto|Resolvido", "dataResolucao", "obs" } ],
+  "pendencias": [ ... ],            // legado: a aba Pendências foi removida na 1.6.0; o painel não lê nem grava mais
   "dizimos": { "AAAA-MM": { "itens": [ { "nome", "valor" } | { "nome", "auto": true } ] } },
   "gemini": { "chave": "…", "modelo": "gemini-x.y-flash" }   // opcional
 }
@@ -83,7 +83,7 @@ se mudou fora do painel, recarrega e avisa em vez de gravar por cima. Gravaçõe
 ## Abas
 
 Visão geral (KPIs, gráficos mês/ano, mapa mês × ano, fechamento mensal) · Vendas (formulário, voz/Gemini, lista do mês, gerar Excel do mês) ·
-Despesas · Clientes (ranking, sumidos, histórico) · Pendências · Dízimo · Resumo · Config (tamanho da letra, Gemini, margem padrão, taxas, exportar).
+Despesas · Clientes (ranking, sumidos, histórico) · Dízimo · Resumo · Config (tamanho da letra, Gemini, margem padrão, taxas, exportar).
 
 ## Venda por voz (Gemini)
 
@@ -112,3 +112,4 @@ Copiar `painel.html` + `dados.json` para uma pasta temporária, servir com `pyth
 | 1.5.1 | 2026-11-02 | Gemini: diferencia limite do plano gratuito (429) de sobrecarga (503), usa também modelos preview/lite, espera e tenta de novo antes de desistir |
 | 1.5.2 | 2026-11-02 | Gemini: modelo desativado pelo Google (404) sai da lista na hora |
 | 1.5.3 | 2026-11-02 | Campos numéricos: o 0 some ao tocar no campo e volta se sair sem digitar |
+| 1.6.0 | 2026-11-02 | Login Google lembra a conta usada (não pede para escolher de novo); aba Pendências removida |
