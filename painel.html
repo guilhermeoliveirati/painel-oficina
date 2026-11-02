@@ -699,7 +699,7 @@ async function gemGerar(corpo){
   for(const modelo of (await gemModelos()).slice(0,4)){
     for(const pensar of [true,false]){ // primeiro sem "raciocínio" (bem mais rápido); se o modelo não aceitar, tenta sem a opção
       const gc={...corpo.generationConfig,...(pensar?{thinkingConfig:{thinkingBudget:0}}:{})};
-      const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),15000);
+      const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),10000);
       try{
         const r=await fetch(`${GEM_API}/models/${modelo}:generateContent`,{method:"POST",signal:ctl.signal,
           headers:{"Content-Type":"application/json","x-goog-api-key":D.gemini.chave},body:JSON.stringify({...corpo,generationConfig:gc})});
@@ -722,7 +722,7 @@ async function gemInterpretar(frase){
   const prompt=`Você preenche o cadastro de uma venda de uma oficina mecânica a partir do que o mecânico falou.
 Hoje é ${hoje()} (formato AAAA-MM-DD).
 Campos:
-- cliente: nome do cliente. Se parecer com um destes clientes já cadastrados, use exatamente a grafia da lista: ${nomes.join(", ")}.
+- cliente: nome do cliente, que pode ter várias palavras (ex.: "Zé Fatinha", "Pai da Bia"). Normalmente é o que vem antes dos valores. Compare com os clientes já cadastrados abaixo e, se combinar, use exatamente a grafia da lista, preferindo o nome que cobre mais palavras faladas ("zé fatinha" é "Zé Fatinha", não "Zé"). Clientes cadastrados: ${nomes.join("; ")}.
 - data: AAAA-MM-DD. Se não falar, use hoje. Entenda "ontem", "sexta passada" etc.
 - pecas: valor das peças pelo preço original de loja (o que o cliente paga pelas peças). 0 se não houver peças.
 - descPecas: quanto o mecânico ganhou de desconto na compra das peças, em reais. null se não falar (o sistema usa 10%). Se falar em porcentagem, converta para reais.
