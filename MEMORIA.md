@@ -107,3 +107,4 @@ Copiar `painel.html` + `dados.json` para uma pasta temporária, servir com `pyth
 | 1.2.0 | 2026-10-31 | Web app: abre o dados.json pelo Google Drive (tablet), GitHub Pages, ícone e manifest |
 | 1.3.0 | 2026-10-31 | Tamanho da letra por aparelho; orientação de escolha do arquivo só na primeira vez |
 | 1.4.0 | 2026-11-02 | Venda por voz com Gemini (troca de modelo, nomes compostos, microfone contínuo); rodapé com autor e versão |
+| 1.5.0 | 2026-11-02 | Vendas: campo Obs removido do formulário e da lista (obs antigas continuam no arquivo, no histórico do cliente e no Excel); Gemini não preenche mais obs |

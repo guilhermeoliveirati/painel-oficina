@@ -143,7 +143,6 @@ table.resumo tr.final td{font-size:18px;font-weight:700;border-top:2px solid var
       <label>Serviço (R$)<input name="servico" type="number" step="0.01" min="0" value="0"></label>
       <label>Valor cobrado (R$)<input name="cobrado" type="number" step="0.01" min="0" value="0"></label>
       <label>Pagamento<select name="metodo" id="selMetodo"></select></label>
-      <label style="grid-column:span 2">Obs<input name="obs"></label>
       <div class="calc" style="grid-column:1/-1;display:flex;gap:8px;align-items:flex-start">
         <button type="button" class="info" id="vInfoBtn" title="Como o lucro é calculado" aria-expanded="false">i</button>
         <div id="vCalc" style="flex:1"></div>
@@ -173,7 +172,7 @@ table.resumo tr.final td{font-size:18px;font-weight:700;border-top:2px solid var
   <div class="card">
     <div class="row" style="justify-content:space-between;margin-bottom:8px">
       <h2 style="margin:0">Vendas do mês</h2>
-      <div class="row" style="align-items:end"><label>Mês<input type="month" id="vMes"></label><label>Buscar<input id="vBusca" placeholder="cliente ou obs"></label>
+      <div class="row" style="align-items:end"><label>Mês<input type="month" id="vMes"></label><label>Buscar<input id="vBusca" placeholder="cliente"></label>
         <button class="btn sec2" id="vExcel" title="Cria a planilha do mês dentro da pasta do ano (ex.: Mecanica\2026)">📄 Gerar Excel do mês</button>
         <a href="#" id="vTrocaPasta" class="muted" title="Esquece a pasta escolhida e pergunta de novo no próximo Excel">trocar pasta</a></div>
     </div>
@@ -322,7 +321,7 @@ const hoje=()=>new Date().toLocaleDateString("sv-SE");
 const fmtData=d=>d?d.split("-").reverse().join("/"):"";
 
 // Versão do painel: aumentar a cada ajuste (ver MEMORIA.md › Versões).
-const VERSAO="1.4.0";
+const VERSAO="1.5.0";
 document.getElementById("versao").textContent=VERSAO;
 
 let D=null, fonte=null, charts={};
@@ -593,7 +592,7 @@ $("#vCancelar").onclick=limparVenda;
 fV.onsubmit=e=>{e.preventDefault();
   const {taxa,lucro}=calcVenda();
   const v={id:fV.id.value||novoId("v"),data:fV.data.value,cliente:nomeProprio(fV.cliente.value),pecas:r2(fV.pecas.value),descPecas:r2(fV.descPecas.value),
-    servico:r2(fV.servico.value),cobrado:r2(fV.cobrado.value),metodo:fV.metodo.value,taxa,lucro,obs:fV.obs.value.trim()};
+    servico:r2(fV.servico.value),cobrado:r2(fV.cobrado.value),metodo:fV.metodo.value,taxa,lucro,obs:D.vendas.find(x=>x.id===fV.id.value)?.obs||""}; // campo Obs saiu da tela; mantém a obs das vendas antigas ao editar
   const i=D.vendas.findIndex(x=>x.id===v.id); i>=0?D.vendas[i]=v:D.vendas.push(v);
   D.vendas.sort((a,b)=>a.data.localeCompare(b.data));
   $("#vMes").value=v.data.slice(0,7);
@@ -607,8 +606,8 @@ function renderVendas(){
   $("#vResumo").innerHTML=`${L.length} vendas · Faturamento <b>${brl(s.f)}</b> · Lucro <b>${brl(s.l)}</b> · Cobrado a mais <b>${brl(s.m)}</b> · Taxas ${brl(s.t)}`+(q?" · busca em todos os meses":"");
   const celMais=v=>{const m=aMais(v),b=v.pecas+v.servico;if(!m)return`<td class="n muted">–</td>`;
     return`<td class="n" style="color:${m>0?"var(--ok)":"var(--bad)"}">${m>0?"+":"−"}${brl(Math.abs(m))}${b?` <span class="muted">(${m>0?"+":"−"}${pct(Math.abs(m)/b)})</span>`:""}</td>`};
-  $("#tVendas").innerHTML=`<tr><th>Data</th><th>Cliente</th><th class="n">Peças</th><th class="n">Margem peças</th><th class="n">Serviço</th><th class="n">Cobrado</th><th class="n">Cobrado a mais</th><th>Pagamento</th><th class="n">Taxa</th><th class="n">Lucro</th><th>Obs</th><th></th></tr>`+
-    L.slice().reverse().map(v=>`<tr><td>${fmtData(v.data)}</td><td>${esc(v.cliente)}</td><td class="n">${brl(v.pecas)}</td><td class="n">${brl(v.descPecas)}</td><td class="n">${brl(v.servico)}</td><td class="n"><b>${brl(v.cobrado)}</b></td>${celMais(v)}<td>${esc(v.metodo)}</td><td class="n">${brl(v.taxa)}</td><td class="n">${brl(v.lucro)}</td><td>${esc(v.obs)}</td>
+  $("#tVendas").innerHTML=`<tr><th>Data</th><th>Cliente</th><th class="n">Peças</th><th class="n">Margem peças</th><th class="n">Serviço</th><th class="n">Cobrado</th><th class="n">Cobrado a mais</th><th>Pagamento</th><th class="n">Taxa</th><th class="n">Lucro</th><th></th></tr>`+
+    L.slice().reverse().map(v=>`<tr><td>${fmtData(v.data)}</td><td>${esc(v.cliente)}</td><td class="n">${brl(v.pecas)}</td><td class="n">${brl(v.descPecas)}</td><td class="n">${brl(v.servico)}</td><td class="n"><b>${brl(v.cobrado)}</b></td>${celMais(v)}<td>${esc(v.metodo)}</td><td class="n">${brl(v.taxa)}</td><td class="n">${brl(v.lucro)}</td>
     <td><button class="btn sm sec2" onclick="editarVenda('${v.id}')">Editar</button> <button class="btn sm del" onclick="apagar('vendas','${v.id}')">✕</button></td></tr>`).join("");
 }
 window.editarVenda=id=>{const v=D.vendas.find(x=>x.id===id);for(const k in v)if(fV[k])fV[k].value=v[k];cobradoManual=descManual=true;$("#vTitulo").textContent="Editando venda de "+v.cliente;calcVenda();window.scrollTo({top:0,behavior:"smooth"})};
@@ -736,12 +735,11 @@ Campos:
 - servico: valor da mão de obra.
 - cobrado: valor total cobrado do cliente. null se não falar.
 - metodo: forma de pagamento, exatamente uma destas: ${metodos.join(", ")}. "pix" = Pix; "dinheiro"/"espécie" = Dinheiro; "débito" = Débito; "crédito em N vezes" = Crédito Nx; crédito sem parcelas = Crédito 1x. null se não falar.
-- obs: qualquer outra informação útil (carro, serviço feito, pendência). Vazio se não houver.
 Números falados por extenso viram números ("trezentos e cinquenta" = 350; "mil e duzentos" = 1200).
 Frase do mecânico: """${frase}"""`;
   const schema={type:"OBJECT",properties:{
     cliente:{type:"STRING"},data:{type:"STRING"},pecas:{type:"NUMBER"},descPecas:{type:"NUMBER",nullable:true},
-    servico:{type:"NUMBER"},cobrado:{type:"NUMBER",nullable:true},metodo:{type:"STRING",nullable:true},obs:{type:"STRING"}},
+    servico:{type:"NUMBER"},cobrado:{type:"NUMBER",nullable:true},metodo:{type:"STRING",nullable:true}},
     required:["cliente","data","pecas","servico"]};
   const txt=await gemGerar({contents:[{role:"user",parts:[{text:prompt}]}],
     generationConfig:{temperature:0,responseMimeType:"application/json",responseSchema:schema}});
@@ -757,7 +755,6 @@ function preencherVenda(x){
   set("servico",r2(x.servico||0));           // dispara cobrado = peças + serviço
   if(x.cobrado!=null)set("cobrado",r2(x.cobrado));
   if(x.metodo&&D.taxas[x.metodo]!=null)fV.metodo.value=x.metodo;
-  if(x.obs)fV.obs.value=x.obs;
   calcVenda();
 }
 const Reconhecedor=window.SpeechRecognition||window.webkitSpeechRecognition;
