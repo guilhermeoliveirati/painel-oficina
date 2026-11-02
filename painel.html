@@ -35,6 +35,9 @@ nav button{white-space:nowrap}
   nav button{padding:10px 6px;text-align:center}
   #status{margin:0;align-self:center;justify-self:center}
   #reconectar{grid-column:1/-1}
+  #tDiz input[data-k="nome"]{width:100%;min-width:0;box-sizing:border-box}
+  #tDiz input[data-k="valor"]{width:96px!important}
+  #tDiz td,#tDiz th{padding:6px 4px}
 }
 main{max-width:1200px;margin:0 auto;padding:20px 16px}
 .sec{display:none}.sec.on{display:block}
@@ -319,7 +322,7 @@ const hoje=()=>new Date().toLocaleDateString("sv-SE");
 const fmtData=d=>d?d.split("-").reverse().join("/"):"";
 
 // Versão do painel: aumentar a cada ajuste (ver MEMORIA.md › Versões).
-const VERSAO="1.8.1";
+const VERSAO="1.8.2";
 document.getElementById("versao").textContent=VERSAO;
 
 let D=null, fonte=null, charts={};

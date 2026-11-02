@@ -119,3 +119,4 @@ Copiar `painel.html` + `dados.json` para uma pasta temporária, servir com `pyth
 | 1.7.3 | 2026-11-02 | Título "Painel da Oficina" removido do topo; topo fino em uma linha (menu com rolagem lateral + status) |
 | 1.8.0 | 2026-11-02 | Dízimo: botão "Copiar valores do mês anterior" (só os valores fora da Oficina, que continua automática); lançado Aluguel R$ 1.764 de jul a nov/2026 |
 | 1.8.1 | 2026-11-02 | Topo no tablet em duas linhas de 4 casas (botões maiores, afastados do topo; status na última casa) |
+| 1.8.2 | 2026-11-02 | Dízimo: tabela do mês cabe na largura do tablet |
