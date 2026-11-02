@@ -20,20 +20,17 @@ html{font-size:14px}
 body{margin:0;background:var(--bg);color:var(--txt);font:1rem/1.45 system-ui,"Segoe UI",Roboto,sans-serif}
 canvas{max-width:100%}
 header{position:sticky;top:0;z-index:5;background:#1d2330;color:#fff;padding:12px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-header h1{font-size:1.286rem;margin:0;font-weight:600}
 #status{font-size:0.786rem;color:#cbd5e1;margin-left:auto;transition:opacity .6s}
 #status.sutil{opacity:.45}
 nav{display:flex;gap:4px;flex-wrap:wrap}
 nav button{background:transparent;border:0;color:#cbd5e1;padding:8px 12px;border-radius:6px;cursor:pointer;font:inherit}
 nav button.on{background:#334155;color:#fff}
-/* Telas estreitas (tablet em pé, celular): título e status numa linha, menu numa linha só com rolagem para o lado */
-@media (max-width:900px){
-  header{padding:8px 12px;gap:4px 10px}
-  header h1{font-size:1.1rem}
-  nav{order:3;flex-basis:100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-  nav::-webkit-scrollbar{display:none}
-  nav button{padding:6px 10px;white-space:nowrap;flex:none}
-}
+/* Topo fino: uma linha só com o menu (rola para o lado se não couber) e o status na ponta */
+header{padding:4px 10px;gap:8px;flex-wrap:nowrap}
+nav{flex:1;min-width:0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+nav::-webkit-scrollbar{display:none}
+nav button{padding:6px 10px;white-space:nowrap;flex:none}
+#status{white-space:nowrap}
 main{max-width:1200px;margin:0 auto;padding:20px 16px}
 .sec{display:none}.sec.on{display:block}
 .card{background:var(--card);border:1px solid var(--brd);border-radius:10px;padding:16px;margin-bottom:16px}
@@ -84,7 +81,6 @@ table.resumo tr.final td{font-size:1.286rem;font-weight:700;border-top:2px solid
 </head>
 <body>
 <header>
-  <h1>🔧 Painel da Oficina</h1>
   <nav id="nav">
     <button data-s="geral" class="on">Visão geral</button>
     <button data-s="vendas">Vendas</button>
@@ -318,7 +314,7 @@ const hoje=()=>new Date().toLocaleDateString("sv-SE");
 const fmtData=d=>d?d.split("-").reverse().join("/"):"";
 
 // Versão do painel: aumentar a cada ajuste (ver MEMORIA.md › Versões).
-const VERSAO="1.7.2";
+const VERSAO="1.7.3";
 document.getElementById("versao").textContent=VERSAO;
 
 let D=null, fonte=null, charts={};

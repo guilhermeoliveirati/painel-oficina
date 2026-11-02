@@ -116,3 +116,4 @@ Copiar `painel.html` + `dados.json` para uma pasta temporária, servir com `pyth
 | 1.7.0 | 2026-11-02 | Status discreto no topo ("☁ Drive"); botão "Exportar" à direita na linha do Mês/Buscar; texto de preenchimento automático movido para o "i" |
 | 1.7.1 | 2026-11-02 | Tamanho da letra sem CSS zoom (letras em rem): no tablet o zoom fazia os gráficos crescerem e a tela ficava desalinhada |
 | 1.7.2 | 2026-11-02 | Topo compacto em telas estreitas: título e status na mesma linha, menu numa linha só com rolagem lateral |
+| 1.7.3 | 2026-11-02 | Título "Painel da Oficina" removido do topo; topo fino em uma linha (menu com rolagem lateral + status) |
