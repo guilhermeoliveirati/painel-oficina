@@ -52,6 +52,10 @@ input:focus,select:focus{outline:2px solid var(--acc2);border-color:var(--acc)}
 .calc{background:#f8fafc;border:1px dashed var(--brd);border-radius:8px;padding:10px;font-size:13px}
 .calc b{font-variant-numeric:tabular-nums}
 .muted{color:var(--mut);font-size:12px}
+.voz{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px;margin-bottom:12px}
+.voz input{flex:1;min-width:200px}
+#vVoz.gravando{background:var(--bad);animation:pulsar 1s infinite}
+@keyframes pulsar{50%{opacity:.6}}
 table.resumo td{font-size:15px;padding:9px 8px}
 table.resumo tr.sub td{color:var(--bad)}
 table.resumo tr.parcial td{background:#f8fafc;font-weight:600}
@@ -123,6 +127,12 @@ table.resumo tr.final td{font-size:18px;font-weight:700;border-top:2px solid var
 <section class="sec" id="s-vendas">
   <div class="card">
     <h2 id="vTitulo">Nova venda</h2>
+    <div class="voz">
+      <button type="button" class="btn" id="vVoz">🎤 Falar venda</button>
+      <input id="vVozTexto" placeholder="ou digite: Caio, peças 300, serviço 200, cobrei 550 no pix">
+      <button type="button" class="btn sec2" id="vVozIr">Preencher</button>
+      <div class="muted" id="vVozMsg" style="flex-basis:100%">Fale a venda e a Gemini preenche os campos. Você confere e salva.</div>
+    </div>
     <form class="f" id="fVenda" autocomplete="off">
       <input type="hidden" name="id">
       <label>Cliente<input name="cliente" list="dlClientes" required></label>
@@ -267,6 +277,10 @@ table.resumo tr.final td{font-size:18px;font-weight:700;border-top:2px solid var
 <!-- CONFIG -->
 <section class="sec" id="s-config">
   <div class="grid2">
+    <div class="card"><h2>Gemini (venda por voz)</h2>
+      <label>Chave da API da Gemini<input id="cfgGemini" type="password" autocomplete="off" placeholder="cole aqui a chave (começa com AIza…)"></label>
+      <div class="row" style="margin-top:8px"><button class="btn sec2" id="cfgGemTestar">Testar chave</button><span class="muted" id="cfgGemMsg"></span></div>
+      <p class="muted">A chave fica guardada no dados.json, no seu Google Drive: cola uma vez e vale no computador e no tablet. Não vai para o GitHub.</p></div>
     <div class="card"><h2>Tamanho da letra</h2>
       <div class="row" id="cfgFonte"></div>
       <p class="muted">Vale só para este aparelho (computador e tablet podem ter tamanhos diferentes).</p></div>
@@ -659,6 +673,90 @@ function renderPend(){
     <td><button class="btn sm sec2" onclick="editarPend('${p.id}')">Editar</button> <button class="btn sm del" onclick="apagar('pendencias','${p.id}')">✕</button></td></tr>`).join("");
 }
 
+/* ---------- venda por voz (Gemini) ----------
+   A fala vira texto no próprio navegador; a Gemini transforma o texto nos campos da venda.
+   A chave da Gemini fica dentro do dados.json (D.gemini.chave), no Google Drive: é colada uma vez em Config
+   e passa a valer em todos os aparelhos. Nunca vai para o GitHub. */
+const GEM_API="https://generativelanguage.googleapis.com/v1beta";
+async function gemModelo(){
+  if(D.gemini?.modelo)return D.gemini.modelo;
+  // escolhe sozinho o modelo "flash" mais novo disponível para a chave
+  const r=await fetch(`${GEM_API}/models?pageSize=200`,{headers:{"x-goog-api-key":D.gemini.chave}});
+  if(!r.ok)throw new Error("chave da Gemini recusada ("+r.status+")");
+  const ms=(await r.json()).models.filter(m=>m.supportedGenerationMethods?.includes("generateContent")&&/flash/.test(m.name)&&!/lite|image|tts|live|audio|thinking|exp|preview/.test(m.name));
+  const ver=n=>parseFloat((n.match(/gemini-(\d+(\.\d+)?)/)||[0,0])[1]);
+  ms.sort((a,b)=>ver(b.name)-ver(a.name));
+  if(!ms.length)throw new Error("nenhum modelo Gemini Flash disponível para esta chave");
+  D.gemini.modelo=ms[0].name.replace("models/","");salvar();
+  return D.gemini.modelo;
+}
+async function gemInterpretar(frase){
+  const nomes=[...new Map(D.vendas.slice(-600).map(v=>[norm(v.cliente),v.cliente])).values()];
+  const metodos=Object.keys(D.taxas);
+  const prompt=`Você preenche o cadastro de uma venda de uma oficina mecânica a partir do que o mecânico falou.
+Hoje é ${hoje()} (formato AAAA-MM-DD).
+Campos:
+- cliente: nome do cliente. Se parecer com um destes clientes já cadastrados, use exatamente a grafia da lista: ${nomes.join(", ")}.
+- data: AAAA-MM-DD. Se não falar, use hoje. Entenda "ontem", "sexta passada" etc.
+- pecas: valor das peças pelo preço original de loja (o que o cliente paga pelas peças). 0 se não houver peças.
+- descPecas: quanto o mecânico ganhou de desconto na compra das peças, em reais. null se não falar (o sistema usa 10%). Se falar em porcentagem, converta para reais.
+- servico: valor da mão de obra.
+- cobrado: valor total cobrado do cliente. null se não falar.
+- metodo: forma de pagamento, exatamente uma destas: ${metodos.join(", ")}. "pix" = Pix; "dinheiro"/"espécie" = Dinheiro; "débito" = Débito; "crédito em N vezes" = Crédito Nx; crédito sem parcelas = Crédito 1x. null se não falar.
+- obs: qualquer outra informação útil (carro, serviço feito, pendência). Vazio se não houver.
+Números falados por extenso viram números ("trezentos e cinquenta" = 350; "mil e duzentos" = 1200).
+Frase do mecânico: """${frase}"""`;
+  const schema={type:"OBJECT",properties:{
+    cliente:{type:"STRING"},data:{type:"STRING"},pecas:{type:"NUMBER"},descPecas:{type:"NUMBER",nullable:true},
+    servico:{type:"NUMBER"},cobrado:{type:"NUMBER",nullable:true},metodo:{type:"STRING",nullable:true},obs:{type:"STRING"}},
+    required:["cliente","data","pecas","servico"]};
+  const modelo=await gemModelo();
+  const r=await fetch(`${GEM_API}/models/${modelo}:generateContent`,{method:"POST",
+    headers:{"Content-Type":"application/json","x-goog-api-key":D.gemini.chave},
+    body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],
+      generationConfig:{temperature:0,responseMimeType:"application/json",responseSchema:schema}})});
+  if(r.status===404){delete D.gemini.modelo;throw new Error("modelo da Gemini mudou, tente de novo")}
+  if(!r.ok)throw new Error("Gemini respondeu "+r.status+": "+(await r.text()).slice(0,160));
+  const txt=(await r.json()).candidates?.[0]?.content?.parts?.map(p=>p.text).join("")||"";
+  return JSON.parse(txt);
+}
+function preencherVenda(x){
+  limparVenda();
+  const set=(n,v)=>{fV[n].value=v;fV[n].dispatchEvent(new Event("input",{bubbles:true}))};
+  if(x.cliente)fV.cliente.value=nomeProprio(x.cliente);
+  if(/^\d{4}-\d{2}-\d{2}$/.test(x.data||""))fV.data.value=x.data;
+  set("pecas",r2(x.pecas||0));               // dispara a margem automática de 10%
+  if(x.descPecas!=null)set("descPecas",r2(x.descPecas));
+  set("servico",r2(x.servico||0));           // dispara cobrado = peças + serviço
+  if(x.cobrado!=null)set("cobrado",r2(x.cobrado));
+  if(x.metodo&&D.taxas[x.metodo]!=null)fV.metodo.value=x.metodo;
+  if(x.obs)fV.obs.value=x.obs;
+  calcVenda();
+}
+const Reconhecedor=window.SpeechRecognition||window.webkitSpeechRecognition;
+let ouvindo=null;
+function vozStatus(t,erro){const s=$("#vVozMsg");s.textContent=t;s.style.color=erro?"var(--bad)":""}
+async function processarFrase(frase){
+  frase=frase.trim();if(!frase)return;
+  $("#vVozTexto").value=frase;vozStatus("Gemini preenchendo…");
+  try{preencherVenda(await gemInterpretar(frase));vozStatus("Pronto: confira os campos e clique em Salvar venda.")}
+  catch(e){vozStatus("Erro: "+e.message,true)}
+}
+$("#vVoz").onclick=()=>{
+  if(!D.gemini?.chave){vozStatus("Cole a chave da Gemini em Config primeiro.",true);return}
+  if(ouvindo){ouvindo.stop();return}
+  if(!Reconhecedor){vozStatus("Este navegador não reconhece voz: digite a frase ao lado e toque em Preencher.",true);return}
+  const rec=new Reconhecedor();rec.lang="pt-BR";rec.interimResults=true;rec.continuous=true;
+  let final="";
+  rec.onresult=e=>{let parcial="";for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;e.results[i].isFinal?final+=t+" ":parcial+=t}
+    $("#vVozTexto").value=(final+parcial).trim()};
+  rec.onerror=e=>vozStatus(e.error==="not-allowed"?"Permita o uso do microfone para este site.":"Erro no microfone: "+e.error,true);
+  rec.onend=()=>{ouvindo=null;$("#vVoz").textContent="🎤 Falar venda";$("#vVoz").classList.remove("gravando");processarFrase(final||$("#vVozTexto").value)};
+  rec.start();ouvindo=rec;$("#vVoz").textContent="⏹ Parar e preencher";$("#vVoz").classList.add("gravando");
+  vozStatus("Ouvindo… fale o cliente, peças, serviço, valor cobrado e pagamento. Toque em Parar quando terminar.");
+};
+$("#vVozIr").onclick=()=>{if(!D.gemini?.chave){vozStatus("Cole a chave da Gemini em Config primeiro.",true);return}processarFrase($("#vVozTexto").value)};
+
 /* ---------- dízimo ---------- */
 const NDIZ=4;
 // Mês sem dízimo lançado = automático: 1º valor "Oficina" = lucro − despesas do mês.
@@ -823,7 +921,11 @@ aplicarFonte(LS.get("zoom")||1);
 // Orientação de onde está o dados.json: só aparece até o arquivo ser aberto pela primeira vez neste aparelho.
 if(LS.get("jaAbriu"))document.querySelectorAll(".orienta").forEach(e=>e.remove());
 $("#cfgMargem").onchange=e=>{D.margemPadrao=r2(e.target.value);salvar()};
+$("#cfgGemini").onchange=e=>{const k=e.target.value.trim();if(k){D.gemini={chave:k}}else delete D.gemini;salvar();$("#cfgGemMsg").textContent=k?"chave salva":"chave removida"};
+$("#cfgGemTestar").onclick=async()=>{const m=$("#cfgGemMsg");if(!D.gemini?.chave){m.textContent="cole a chave primeiro";return}
+  m.textContent="testando…";try{delete D.gemini.modelo;m.textContent="funcionando, modelo "+await gemModelo()}catch(e){m.textContent="Erro: "+e.message}};
 function renderConfig(){
+  $("#cfgGemini").value=D.gemini?.chave||"";
   renderFonte();
   $("#cfgMargem").value=margemPadrao();
   $("#tTaxas").innerHTML=`<tr><th>Forma</th><th class="n">Taxa (%)</th></tr>`+Object.entries(D.taxas).map(([k,v])=>
