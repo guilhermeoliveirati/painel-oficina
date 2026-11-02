@@ -19,7 +19,8 @@
 body{margin:0;background:var(--bg);color:var(--txt);font:14px/1.45 system-ui,"Segoe UI",Roboto,sans-serif}
 header{position:sticky;top:0;z-index:5;background:#1d2330;color:#fff;padding:12px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 header h1{font-size:18px;margin:0;font-weight:600}
-#status{font-size:12px;color:#cbd5e1;margin-left:auto}
+#status{font-size:11px;color:#cbd5e1;margin-left:auto;transition:opacity .6s}
+#status.sutil{opacity:.45}
 nav{display:flex;gap:4px;flex-wrap:wrap}
 nav button{background:transparent;border:0;color:#cbd5e1;padding:8px 12px;border-radius:6px;cursor:pointer;font:inherit}
 nav button.on{background:#334155;color:#fff}
@@ -158,6 +159,8 @@ table.resumo tr.final td{font-size:18px;font-weight:700;border-top:2px solid var
         <p style="margin:6px 0 0">É o mesmo que <b>serviço + desconto em peças + valor a mais − taxa</b>.<br>
         Exemplo: cobrado R$ 639, peças R$ 304 com 10% de desconto (R$ 30,40), crédito 2x (taxa R$ 34,44):
         639 + 30,40 − 304 − 34,44 = <b>R$ 330,96</b>.</p>
+        <p style="margin:6px 0 0"><b>Preenchimento automático:</b> a margem em peças vem com 10% das peças (padrão em Config); se for diferente, é só alterar o valor em R$.
+        O valor cobrado vem com peças + serviço; altere se cobrou a mais ou a menos.</p>
         <p class="muted" style="margin:6px 0 0">Esse é o lucro de cada venda. O "Lucro final" do mês ainda desconta as despesas (MEI, INSS, combustível…).</p>
       </div>
       <div class="row" style="grid-column:1/-1">
@@ -166,14 +169,15 @@ table.resumo tr.final td{font-size:18px;font-weight:700;border-top:2px solid var
       </div>
     </form>
     <datalist id="dlClientes"></datalist>
-    <p class="muted">A margem em peças é preenchida sozinha com 10% das peças (padrão em Config). Se for diferente, é só alterar o valor em R$. O valor cobrado é preenchido com peças + serviço. Lucro = serviço + margem em peças + o que for cobrado acima de peças + serviço − taxa do cartão.</p>
   </div>
   <div class="card">
-    <div class="row" style="justify-content:space-between;margin-bottom:8px">
-      <h2 style="margin:0">Vendas do mês</h2>
-      <div class="row" style="align-items:end"><label>Mês<input type="month" id="vMes"></label><label>Buscar<input id="vBusca" placeholder="cliente"></label>
-        <button class="btn sec2" id="vExcel" title="Cria a planilha do mês dentro da pasta do ano (ex.: Mecanica\2026)">📄 Gerar Excel do mês</button>
-        <a href="#" id="vTrocaPasta" class="muted" title="Esquece a pasta escolhida e pergunta de novo no próximo Excel">trocar pasta</a></div>
+    <h2>Vendas do mês</h2>
+    <div class="row" style="align-items:end;margin-bottom:8px">
+      <label>Mês<input type="month" id="vMes"></label><label>Buscar<input id="vBusca" placeholder="cliente"></label>
+      <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px">
+        <a href="#" id="vTrocaPasta" class="muted" title="Esquece a pasta escolhida e pergunta de novo no próximo Excel">trocar pasta</a>
+        <button class="btn sec2" id="vExcel" title="Cria a planilha Excel do mês dentro da pasta do ano (ex.: Mecanica, pasta 2026)">📄 Exportar</button>
+      </div>
     </div>
     <div id="vResumo" class="muted" style="margin-bottom:8px"></div>
     <div class="scroll"><table id="tVendas"></table></div>
@@ -304,7 +308,7 @@ const hoje=()=>new Date().toLocaleDateString("sv-SE");
 const fmtData=d=>d?d.split("-").reverse().join("/"):"";
 
 // Versão do painel: aumentar a cada ajuste (ver MEMORIA.md › Versões).
-const VERSAO="1.6.0";
+const VERSAO="1.7.0";
 document.getElementById("versao").textContent=VERSAO;
 
 let D=null, fonte=null, charts={};
@@ -464,7 +468,9 @@ addEventListener("focus",conferirArquivo);
 let ultimaConferencia=0;
 setInterval(()=>{if(!document.hidden&&fonte&&Date.now()-ultimaConferencia>=fonte.intervalo){ultimaConferencia=Date.now();conferirArquivo()}},5000);
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)conferirArquivo()});
-function status(t,erro){const s=$("#status");s.textContent=t;s.style.color=erro?"#fca5a5":""}
+// Mensagens de status: avisos normais ficam discretos depois de alguns segundos; erros continuam em destaque.
+function status(t,erro){const s=$("#status");s.textContent=t;s.style.color=erro?"#fca5a5":"";s.classList.remove("sutil");
+  clearTimeout(status.t);if(!erro)status.t=setTimeout(()=>s.classList.add("sutil"),3000)}
 const novoId=p=>p+(D.proximoId++);
 
 /* ---------- navegação ---------- */
@@ -956,7 +962,7 @@ $("#xJson").onclick=()=>baixar("dados-"+hoje()+".json",JSON.stringify(D,null,1),
 /* ---------- início ---------- */
 function iniciar(){
   $("#gate").style.display="none";$("#app").style.display="";
-  if(!fonte)status("aberto sem permissão de gravar",true);else status(fonte.tipo==="drive"?"dados carregados do Google Drive":"dados carregados");
+  if(!fonte)status("aberto sem permissão de gravar",true);else status(fonte.tipo==="drive"?"☁ Drive":"📁 arquivo local");
   $("#selMetodo").innerHTML=Object.keys(D.taxas).map(k=>`<option>${esc(k)}</option>`).join("");
   $("#selCat").innerHTML=CATS.map(k=>`<option>${k}</option>`).join("");
   const mesAtual=hoje().slice(0,7);

@@ -113,3 +113,4 @@ Copiar `painel.html` + `dados.json` para uma pasta temporária, servir com `pyth
 | 1.5.2 | 2026-11-02 | Gemini: modelo desativado pelo Google (404) sai da lista na hora |
 | 1.5.3 | 2026-11-02 | Campos numéricos: o 0 some ao tocar no campo e volta se sair sem digitar |
 | 1.6.0 | 2026-11-02 | Login Google lembra a conta usada (não pede para escolher de novo); aba Pendências removida |
+| 1.7.0 | 2026-11-02 | Status discreto no topo ("☁ Drive"); botão "Exportar" à direita na linha do Mês/Buscar; texto de preenchimento automático movido para o "i" |
