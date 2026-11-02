@@ -52,6 +52,7 @@ input:focus,select:focus{outline:2px solid var(--acc2);border-color:var(--acc)}
 .calc{background:#f8fafc;border:1px dashed var(--brd);border-radius:8px;padding:10px;font-size:13px}
 .calc b{font-variant-numeric:tabular-nums}
 .muted{color:var(--mut);font-size:12px}
+#rodape{text-align:center;color:var(--mut);font-size:12px;padding:18px 16px 24px}
 .voz{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px;margin-bottom:12px}
 .voz input{flex:1;min-width:200px}
 #vVoz.gravando{background:var(--bad);animation:pulsar 1s infinite}
@@ -302,6 +303,8 @@ table.resumo tr.final td{font-size:18px;font-weight:700;border-top:2px solid var
 </section>
 </main>
 
+<footer id="rodape">Criado por Guilherme Oliveira | Versão <span id="versao"></span></footer>
+
 <script>
 const MESES=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
 const CATS=["MEI","INSS","Combustível","Ferramentas / prejuízo","Aluguel","Peças / estoque","Outros"];
@@ -317,6 +320,10 @@ const nomeProprio=s=>String(s??"").trim().replace(/\s+/g," ").split(" ").map((p,
 document.addEventListener("focusout",e=>{if(e.target.name==="cliente"&&e.target.value)e.target.value=nomeProprio(e.target.value)});
 const hoje=()=>new Date().toLocaleDateString("sv-SE");
 const fmtData=d=>d?d.split("-").reverse().join("/"):"";
+
+// Versão do painel: aumentar a cada ajuste (ver MEMORIA.md › Versões).
+const VERSAO="1.4.0";
+document.getElementById("versao").textContent=VERSAO;
 
 let D=null, fonte=null, charts={};
 
