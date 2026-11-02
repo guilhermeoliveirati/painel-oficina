@@ -115,3 +115,4 @@ Copiar `painel.html` + `dados.json` para uma pasta temporária, servir com `pyth
 | 1.6.0 | 2026-11-02 | Login Google lembra a conta usada (não pede para escolher de novo); aba Pendências removida |
 | 1.7.0 | 2026-11-02 | Status discreto no topo ("☁ Drive"); botão "Exportar" à direita na linha do Mês/Buscar; texto de preenchimento automático movido para o "i" |
 | 1.7.1 | 2026-11-02 | Tamanho da letra sem CSS zoom (letras em rem): no tablet o zoom fazia os gráficos crescerem e a tela ficava desalinhada |
+| 1.7.2 | 2026-11-02 | Topo compacto em telas estreitas: título e status na mesma linha, menu numa linha só com rolagem lateral |

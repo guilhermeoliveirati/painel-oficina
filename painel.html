@@ -26,6 +26,14 @@ header h1{font-size:1.286rem;margin:0;font-weight:600}
 nav{display:flex;gap:4px;flex-wrap:wrap}
 nav button{background:transparent;border:0;color:#cbd5e1;padding:8px 12px;border-radius:6px;cursor:pointer;font:inherit}
 nav button.on{background:#334155;color:#fff}
+/* Telas estreitas (tablet em pé, celular): título e status numa linha, menu numa linha só com rolagem para o lado */
+@media (max-width:900px){
+  header{padding:8px 12px;gap:4px 10px}
+  header h1{font-size:1.1rem}
+  nav{order:3;flex-basis:100%;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  nav::-webkit-scrollbar{display:none}
+  nav button{padding:6px 10px;white-space:nowrap;flex:none}
+}
 main{max-width:1200px;margin:0 auto;padding:20px 16px}
 .sec{display:none}.sec.on{display:block}
 .card{background:var(--card);border:1px solid var(--brd);border-radius:10px;padding:16px;margin-bottom:16px}
@@ -310,7 +318,7 @@ const hoje=()=>new Date().toLocaleDateString("sv-SE");
 const fmtData=d=>d?d.split("-").reverse().join("/"):"";
 
 // Versão do painel: aumentar a cada ajuste (ver MEMORIA.md › Versões).
-const VERSAO="1.7.1";
+const VERSAO="1.7.2";
 document.getElementById("versao").textContent=VERSAO;
 
 let D=null, fonte=null, charts={};
@@ -478,6 +486,7 @@ const novoId=p=>p+(D.proximoId++);
 /* ---------- navegação ---------- */
 $("#nav").onclick=e=>{const b=e.target.closest("button");if(!b)return;
   document.querySelectorAll("#nav button").forEach(x=>x.classList.toggle("on",x===b));
+  b.scrollIntoView({block:"nearest",inline:"nearest"});
   document.querySelectorAll(".sec").forEach(s=>s.classList.toggle("on",s.id==="s-"+b.dataset.s));
   render();
 };
