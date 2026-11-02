@@ -14,7 +14,7 @@
 2. **Nunca enviar dados para o GitHub**: `dados.json`, `.xlsx` e `.csv` estão no `.gitignore`. Conferir `git status` antes de cada commit.
 3. **Nunca gravar chaves no código.** A chave da Gemini fica dentro do `dados.json` (`gemini.chave`).
    As únicas credenciais no código são as públicas do Google (ID do cliente OAuth, chave do Picker e número do projeto), que não dão acesso a dados.
-4. Textos da interface em **português do Brasil**. Valores em R$ com `brl()`.
+4. Textos da interface em **português do Brasil**. Tamanhos de letra em `rem` (o "Tamanho da letra" muda o `font-size` do `html`); **não usar CSS `zoom`** (quebra os gráficos no Android). Valores em R$ com `brl()`.
 5. A venda **nunca é salva sozinha**: voz/Gemini só preenchem o formulário; quem salva é o usuário.
 6. Antes de mexer no `dados.json` por fora do painel, fazer cópia de segurança. O painel aberto em outro aparelho recarrega sozinho quando o arquivo muda.
 
@@ -114,3 +114,4 @@ Copiar `painel.html` + `dados.json` para uma pasta temporária, servir com `pyth
 | 1.5.3 | 2026-11-02 | Campos numéricos: o 0 some ao tocar no campo e volta se sair sem digitar |
 | 1.6.0 | 2026-11-02 | Login Google lembra a conta usada (não pede para escolher de novo); aba Pendências removida |
 | 1.7.0 | 2026-11-02 | Status discreto no topo ("☁ Drive"); botão "Exportar" à direita na linha do Mês/Buscar; texto de preenchimento automático movido para o "i" |
+| 1.7.1 | 2026-11-02 | Tamanho da letra sem CSS zoom (letras em rem): no tablet o zoom fazia os gráficos crescerem e a tela ficava desalinhada |
