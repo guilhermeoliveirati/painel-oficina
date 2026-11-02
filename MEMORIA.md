@@ -90,7 +90,8 @@ Despesas · Clientes (ranking, sumidos, histórico) · Pendências · Dízimo ·
 - Fala → texto: Web Speech API do navegador (`pt-BR`). O Chrome encerra o reconhecimento nas pausas; o painel religa até o usuário tocar em "Parar" (máx. 2 min).
 - Texto → campos: Gemini API (`generativelanguage.googleapis.com/v1beta`, cabeçalho `x-goog-api-key`), saída JSON com `responseSchema`,
   `temperature: 0` e `thinkingConfig.thinkingBudget: 0` (muito mais rápido). O prompt leva a data de hoje, os métodos de pagamento e os nomes de clientes já cadastrados.
-- Modelos: lista os "Flash" da chave (mais novo primeiro), tenta cada um com limite de 10 s e passa ao próximo se der 503/429/demora; guarda o que funcionou em `gemini.modelo`.
+- Modelos: lista os "Flash" da chave (último que funcionou, depois numerados do mais novo, depois preview, depois lite), tenta até 6 com limite de 10 s cada e passa ao próximo se der 503/429/demora; se todos falharem, espera (usa o `retryDelay` do erro) e faz mais uma rodada. Guarda o que funcionou em `gemini.modelo`.
+- Plano gratuito tem **limite por minuto**: não disparar vários testes em paralelo com a chave real (foi o que causou o 429 em 2026-11-02).
 
 ## Como testar sem mexer nos dados reais
 
@@ -108,3 +109,4 @@ Copiar `painel.html` + `dados.json` para uma pasta temporária, servir com `pyth
 | 1.3.0 | 2026-10-31 | Tamanho da letra por aparelho; orientação de escolha do arquivo só na primeira vez |
 | 1.4.0 | 2026-11-02 | Venda por voz com Gemini (troca de modelo, nomes compostos, microfone contínuo); rodapé com autor e versão |
 | 1.5.0 | 2026-11-02 | Vendas: campo Obs removido do formulário e da lista (obs antigas continuam no arquivo, no histórico do cliente e no Excel); Gemini não preenche mais obs |
+| 1.5.1 | 2026-11-02 | Gemini: diferencia limite do plano gratuito (429) de sobrecarga (503), usa também modelos preview/lite, espera e tenta de novo antes de desistir |

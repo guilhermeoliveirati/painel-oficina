@@ -321,7 +321,7 @@ const hoje=()=>new Date().toLocaleDateString("sv-SE");
 const fmtData=d=>d?d.split("-").reverse().join("/"):"";
 
 // Versão do painel: aumentar a cada ajuste (ver MEMORIA.md › Versões).
-const VERSAO="1.5.0";
+const VERSAO="1.5.1";
 document.getElementById("versao").textContent=VERSAO;
 
 let D=null, fonte=null, charts={};
@@ -684,43 +684,54 @@ function renderPend(){
    A chave da Gemini fica dentro do dados.json (D.gemini.chave), no Google Drive: é colada uma vez em Config
    e passa a valer em todos os aparelhos. Nunca vai para o GitHub. */
 const GEM_API="https://generativelanguage.googleapis.com/v1beta";
-// Modelos "Flash" da chave, do mais novo para o mais antigo. O último que respondeu bem vai primeiro.
+// Modelos "Flash" da chave: primeiro o último que respondeu bem, depois os Flash numerados (mais novo primeiro),
+// depois os "preview" e por último os "lite" (mais simples, mas costumam estar livres).
 async function gemModelos(){
   if(!gemModelos.lista){
     const r=await fetch(`${GEM_API}/models?pageSize=200`,{headers:{"x-goog-api-key":D.gemini.chave}});
     if(!r.ok)throw new Error("chave da Gemini recusada ("+r.status+")");
     const ver=n=>parseFloat((n.match(/gemini-(\d+(\.\d+)?)/)||[0,0])[1]);
+    const grupo=n=>/lite/.test(n)?2:/preview/.test(n)?1:0;
     gemModelos.lista=(await r.json()).models
-      .filter(m=>m.supportedGenerationMethods?.includes("generateContent")&&/gemini-\d.*flash/.test(m.name)&&!/lite|image|tts|live|audio|thinking|exp|preview/.test(m.name))
-      .map(m=>m.name.replace("models/","")).sort((a,b)=>ver(b)-ver(a));
+      .filter(m=>m.supportedGenerationMethods?.includes("generateContent")&&/gemini-\d.*flash/.test(m.name)&&!/image|tts|live|audio|thinking|exp|transcribe|omni/.test(m.name))
+      .map(m=>m.name.replace("models/","")).sort((a,b)=>grupo(a)-grupo(b)||ver(b)-ver(a));
     if(!gemModelos.lista.length)throw new Error("nenhum modelo Gemini Flash disponível para esta chave");
   }
   const ok=D.gemini.modelo;
   return ok&&gemModelos.lista.includes(ok)?[ok,...gemModelos.lista.filter(m=>m!==ok)]:gemModelos.lista;
 }
 async function gemModelo(){return(await gemModelos())[0]}
-// Chama a Gemini tentando um modelo de cada vez: se um estiver sobrecarregado (503/429) ou demorar, passa para o próximo.
+const esperar=ms=>new Promise(r=>setTimeout(r,ms));
+// Chama a Gemini tentando um modelo de cada vez. 503 = modelo sobrecarregado; 429 = limite por minuto do plano gratuito.
+// Nos dois casos passa para o próximo modelo; se todos falharem, espera alguns segundos e faz mais uma rodada.
 async function gemGerar(corpo){
-  let ultimoErro="";
-  for(const modelo of (await gemModelos()).slice(0,4)){
-    for(const pensar of [true,false]){ // primeiro sem "raciocínio" (bem mais rápido); se o modelo não aceitar, tenta sem a opção
-      const gc={...corpo.generationConfig,...(pensar?{thinkingConfig:{thinkingBudget:0}}:{})};
-      const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),10000);
-      try{
-        const r=await fetch(`${GEM_API}/models/${modelo}:generateContent`,{method:"POST",signal:ctl.signal,
-          headers:{"Content-Type":"application/json","x-goog-api-key":D.gemini.chave},body:JSON.stringify({...corpo,generationConfig:gc})});
-        if(r.ok){const txt=(await r.json()).candidates?.[0]?.content?.parts?.map(p=>p.text).join("")||"";
-          if(D.gemini.modelo!==modelo){D.gemini.modelo=modelo;salvar()}
-          return txt}
-        ultimoErro=modelo+": "+r.status;
-        if(r.status===400&&pensar)continue;
-        if(r.status===401||r.status===403)throw new Error("chave da Gemini recusada ("+r.status+")");
-      }catch(e){if(/recusada/.test(e.message))throw e;ultimoErro=modelo+": "+(e.name==="AbortError"?"demorou demais":e.message)}
-      finally{clearTimeout(t)}
-      break;
+  let ultimo={codigo:0,txt:""};
+  for(let rodada=0;rodada<2;rodada++){
+    if(rodada){const s=Math.min(ultimo.espera||8,20);vozStatus(`Gemini ocupada, tentando de novo em ${s} s…`);await esperar(s*1000)}
+    for(const modelo of (await gemModelos()).slice(0,6)){
+      for(const pensar of [true,false]){ // primeiro sem "raciocínio" (bem mais rápido); se o modelo não aceitar a opção, tenta sem ela
+        const gc={...corpo.generationConfig,...(pensar?{thinkingConfig:{thinkingBudget:0}}:{})};
+        const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),10000);
+        try{
+          const r=await fetch(`${GEM_API}/models/${modelo}:generateContent`,{method:"POST",signal:ctl.signal,
+            headers:{"Content-Type":"application/json","x-goog-api-key":D.gemini.chave},body:JSON.stringify({...corpo,generationConfig:gc})});
+          if(r.ok){const txt=(await r.json()).candidates?.[0]?.content?.parts?.map(p=>p.text).join("")||"";
+            if(D.gemini.modelo!==modelo){D.gemini.modelo=modelo;salvar()}
+            return txt}
+          if(r.status===400&&pensar)continue;
+          if(r.status===401||r.status===403)throw new Error("chave da Gemini recusada ("+r.status+")");
+          const err=(await r.json().catch(()=>({}))).error||{};
+          const atraso=(err.details||[]).map(d=>d.retryDelay).find(Boolean);
+          ultimo={codigo:r.status,espera:atraso?Math.ceil(parseFloat(atraso)):0,txt:modelo+": "+r.status};
+        }catch(e){if(/recusada/.test(e.message))throw e;ultimo={codigo:0,txt:modelo+": "+(e.name==="AbortError"?"demorou demais":e.message)}}
+        finally{clearTimeout(t)}
+        break;
+      }
     }
   }
-  throw new Error("a Gemini está sobrecarregada agora, tente de novo em instantes ("+ultimoErro+")");
+  throw new Error(ultimo.codigo===429
+    ?"limite de uso gratuito da Gemini atingido por agora. Espere 1 minuto e toque em Preencher ("+ultimo.txt+")"
+    :"a Gemini está sobrecarregada agora. Toque em Preencher de novo em instantes ("+ultimo.txt+")");
 }
 async function gemInterpretar(frase){
   const nomes=[...new Map(D.vendas.slice(-600).map(v=>[norm(v.cliente),v.cliente])).values()];
