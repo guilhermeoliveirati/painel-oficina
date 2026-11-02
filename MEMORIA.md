@@ -76,7 +76,7 @@ se mudou fora do painel, recarrega e avisa em vez de gravar por cima. Gravaçõe
 - **Lucro da venda = cobrado + descPecas − pecas − taxa** (= serviço + margem + cobrado a mais − taxa). Explicado no botão "i" da tela de venda.
   Planilhas de mar–set/2026 usavam fórmula errada (ignoravam o cobrado a mais); foram corrigidas. Lucros de fev e abr/2022 foram digitados à mão e **não** devem ser recalculados.
 - **Lucro final do mês** = soma dos lucros − despesas. Despesas por mês só existem de mar/2026 em diante.
-- **Dízimo**: até 4 valores por mês, dízimo = 10% da soma. Mês sem registro = automático: 1º valor "Oficina" = lucro − despesas do mês (`auto: true` acompanha mudanças). Excluir grava `itens: []`.
+- **Dízimo**: até 4 valores por mês, dízimo = 10% da soma. Mês sem registro = automático: 1º valor "Oficina" = lucro − despesas do mês (`auto: true` acompanha mudanças). Excluir grava `itens: []`. "Copiar valores do mês anterior" copia só os itens não automáticos (ex.: Aluguel) e mantém a Oficina automática.
 - **Resumo**: lucro oficina − despesas − dízimo = lucro líquido.
 - Nomes de clientes: primeira letra de cada palavra maiúscula (`nomeProprio`), exceto "da, de, do, das, dos, e".
 
@@ -117,3 +117,4 @@ Copiar `painel.html` + `dados.json` para uma pasta temporária, servir com `pyth
 | 1.7.1 | 2026-11-02 | Tamanho da letra sem CSS zoom (letras em rem): no tablet o zoom fazia os gráficos crescerem e a tela ficava desalinhada |
 | 1.7.2 | 2026-11-02 | Topo compacto em telas estreitas: título e status na mesma linha, menu numa linha só com rolagem lateral |
 | 1.7.3 | 2026-11-02 | Título "Painel da Oficina" removido do topo; topo fino em uma linha (menu com rolagem lateral + status) |
+| 1.8.0 | 2026-11-02 | Dízimo: botão "Copiar valores do mês anterior" (só os valores fora da Oficina, que continua automática); lançado Aluguel R$ 1.764 de jul a nov/2026 |
