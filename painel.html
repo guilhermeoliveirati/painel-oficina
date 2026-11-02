@@ -762,18 +762,30 @@ async function processarFrase(frase){
   try{preencherVenda(await gemInterpretar(frase));vozStatus("Pronto: confira os campos e clique em Salvar venda.")}
   catch(e){vozStatus("Erro: "+e.message,true)}
 }
+// O Chrome (principalmente no Android) encerra o reconhecimento sozinho depois de uma pausa curta.
+// Por isso cada trecho é ouvido separado e o microfone é religado até a pessoa tocar em "Parar" (ou 2 minutos).
 $("#vVoz").onclick=()=>{
   if(!D.gemini?.chave){vozStatus("Cole a chave da Gemini em Config primeiro.",true);return}
-  if(ouvindo){ouvindo.stop();return}
+  if(ouvindo){ouvindo.parar();return}
   if(!Reconhecedor){vozStatus("Este navegador não reconhece voz: digite a frase ao lado e toque em Preencher.",true);return}
-  const rec=new Reconhecedor();rec.lang="pt-BR";rec.interimResults=true;rec.continuous=true;
-  let final="";
-  rec.onresult=e=>{let parcial="";for(let i=e.resultIndex;i<e.results.length;i++){const t=e.results[i][0].transcript;e.results[i].isFinal?final+=t+" ":parcial+=t}
-    $("#vVozTexto").value=(final+parcial).trim()};
-  rec.onerror=e=>vozStatus(e.error==="not-allowed"?"Permita o uso do microfone para este site.":"Erro no microfone: "+e.error,true);
-  rec.onend=()=>{ouvindo=null;$("#vVoz").textContent="🎤 Falar venda";$("#vVoz").classList.remove("gravando");processarFrase(final||$("#vVozTexto").value)};
-  rec.start();ouvindo=rec;$("#vVoz").textContent="⏹ Parar e preencher";$("#vVoz").classList.add("gravando");
-  vozStatus("Ouvindo… fale o cliente, peças, serviço, valor cobrado e pagamento. Toque em Parar quando terminar.");
+  let final="", parando=false, rec=null;
+  const inicio=Date.now();
+  const mostrar=parcial=>{$("#vVozTexto").value=(final+parcial).trim()};
+  const terminar=()=>{ouvindo=null;$("#vVoz").textContent="🎤 Falar venda";$("#vVoz").classList.remove("gravando");processarFrase($("#vVozTexto").value)};
+  const ouvir=()=>{
+    rec=new Reconhecedor();rec.lang="pt-BR";rec.interimResults=true;rec.continuous=false;
+    let trecho="";
+    rec.onresult=e=>{let parcial="";for(let i=0;i<e.results.length;i++){const t=e.results[i][0].transcript;e.results[i].isFinal?trecho=t:parcial+=t}mostrar(trecho+" "+parcial)};
+    rec.onerror=e=>{if(e.error==="not-allowed"||e.error==="service-not-allowed"){parando=true;vozStatus("Permita o uso do microfone para este site.",true)}};
+    rec.onend=()=>{if(trecho)final+=trecho+" ";mostrar("");
+      if(parando||Date.now()-inicio>120000)terminar();else{try{ouvir()}catch{terminar()}}};
+    rec.start();
+  };
+  $("#vVozTexto").value="";
+  ouvindo={parar(){parando=true;try{rec.stop()}catch{terminar()}}};
+  ouvir();
+  $("#vVoz").textContent="⏹ Parar e preencher";$("#vVoz").classList.add("gravando");
+  vozStatus("Ouvindo… fale com calma (cliente, peças, serviço, valor cobrado e pagamento). Toque em Parar quando terminar.");
 };
 $("#vVozIr").onclick=()=>{if(!D.gemini?.chave){vozStatus("Cole a chave da Gemini em Config primeiro.",true);return}processarFrase($("#vVozTexto").value)};
 
