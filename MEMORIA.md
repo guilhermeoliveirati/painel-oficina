@@ -80,6 +80,14 @@ se mudou fora do painel, recarrega e avisa em vez de gravar por cima. Gravaçõe
 - **Resumo**: lucro oficina − despesas − dízimo = lucro líquido.
 - Nomes de clientes: primeira letra de cada palavra maiúscula (`nomeProprio`), exceto "da, de, do, das, dos, e".
 
+## Layout (desde 1.9.0)
+
+- Computador: menu no topo em uma linha, com ícones. Tablet/celular (até 900 px): **menu fixo embaixo** com ícone + nome, status "☁ Drive" numa etiqueta no canto superior.
+- Cartões com sombra, campos de 44 px, números da Visão geral com faixa colorida (azul faturamento, verde lucro, vermelho despesas/taxas).
+- Forma de pagamento em botões (`#vChips`): Pix, Dinheiro, Débito, Crédito + parcelas. O `select name="metodo"` continua escondido no formulário e é o que vale.
+- Vendas do mês: tabela no computador; no tablet a tabela some e aparecem cartões (`#vCards`).
+- **Voltar ao layout antigo:** o painel anterior está na tag git `v1.8.2-layout-antigo` (`git checkout v1.8.2-layout-antigo -- painel.html`) e em `Mecanica/Backup painel/painel-1.8.2-layout-antigo.html`. Ao voltar, aumentar a versão normalmente.
+
 ## Abas
 
 Visão geral (KPIs, gráficos mês/ano, mapa mês × ano, fechamento mensal) · Vendas (formulário, voz/Gemini, lista do mês, gerar Excel do mês) ·
@@ -120,3 +128,4 @@ Copiar `painel.html` + `dados.json` para uma pasta temporária, servir com `pyth
 | 1.8.0 | 2026-11-02 | Dízimo: botão "Copiar valores do mês anterior" (só os valores fora da Oficina, que continua automática); lançado Aluguel R$ 1.764 de jul a nov/2026 |
 | 1.8.1 | 2026-11-02 | Topo no tablet em duas linhas de 4 casas (botões maiores, afastados do topo; status na última casa) |
 | 1.8.2 | 2026-11-02 | Dízimo: tabela do mês cabe na largura do tablet |
+| 1.9.0 | 2026-11-02 | Novo layout (aprovado por imagens antes × depois): menu embaixo com ícones no tablet, cartões com sombra, campos maiores, KPIs coloridos, pagamento em botões, vendas do mês em cartões no tablet, ícones nos títulos. Backup do antigo: tag `v1.8.2-layout-antigo` |

@@ -25,16 +25,24 @@ header{position:sticky;top:0;z-index:5;background:#1d2330;color:#fff;padding:12p
 nav{display:flex;gap:4px;flex-wrap:wrap}
 nav button{background:transparent;border:0;color:#cbd5e1;padding:8px 12px;border-radius:6px;cursor:pointer;font:inherit}
 nav button.on{background:#334155;color:#fff}
-/* Topo: no computador, uma linha; em telas estreitas (tablet em pé), duas linhas de 4 botões, com o status na última casa */
+/* Topo: no computador, uma linha só. Em telas estreitas (tablet/celular), o menu vai para baixo com ícones, como apps. */
 header{padding:8px 12px;gap:8px}
 nav button{white-space:nowrap}
+nav button .ico{margin-right:4px}
 #status{white-space:nowrap}
 @media (max-width:900px){
-  header{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:12px 12px 10px}
+  header{position:fixed;top:auto;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(7,1fr);
+    padding:6px 6px 8px;gap:2px;box-shadow:0 -4px 14px rgba(15,23,42,.18)}
   nav{display:contents}
-  nav button{padding:10px 6px;text-align:center}
-  #status{margin:0;align-self:center;justify-self:center}
-  #reconectar{grid-column:1/-1}
+  nav button{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 2px;border-radius:12px;font-size:.74rem}
+  nav button .ico{font-size:1.45rem;line-height:1;margin:0}
+  #status{position:fixed;top:8px;right:10px;background:rgba(29,35,48,.85);color:#e2e8f0;padding:3px 10px;border-radius:999px;font-size:.72rem;z-index:6}
+  #reconectar{position:fixed;top:40px;right:10px}
+  main{padding:16px 12px 96px!important}
+  #rodape{padding-bottom:96px}
+  .kpis{grid-template-columns:1fr 1fr}
+  #tVendas{display:none}
+  #s-vendas #vCards{display:grid}
   #tDiz input[data-k="nome"]{width:100%;min-width:0;box-sizing:border-box}
   #tDiz input[data-k="valor"]{width:96px!important}
   #tDiz td,#tDiz th{padding:6px 4px}
@@ -85,18 +93,53 @@ table.resumo tr.final td{font-size:1.286rem;font-weight:700;border-top:2px solid
 #gate p{color:var(--mut)}
 .tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:0.857rem;background:#e5e7eb}
 .tag.aberto{background:#fee2e2;color:var(--bad)}.tag.ok{background:#dcfce7;color:var(--ok)}
+/* Visual (1.9.0): cartões com sombra, campos maiores para o toque, destaques coloridos */
+:root{--bg:#eef2f6;--brd:#e2e8f0}
+.card,.kpi{border:0;border-radius:16px;box-shadow:0 1px 2px rgba(15,23,42,.06),0 6px 16px rgba(15,23,42,.06)}
+.card{padding:18px}
+.card h2{font-size:1.12rem;display:flex;align-items:center;gap:8px}
+input,select{min-height:44px;border-radius:10px;padding:8px 12px;font-size:1rem;border-color:#d7dee8}
+label{font-size:.82rem;font-weight:600;color:#475569}
+.btn{border-radius:10px;padding:11px 18px;font-weight:600}
+.btn.sm{padding:6px 10px;border-radius:8px;font-weight:500}
+.kpi{padding:14px 16px 14px 20px;position:relative;overflow:hidden}
+.kpi::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--acc)}
+.kpi:nth-child(2)::before,.kpi:nth-child(4)::before{background:#16a34a}
+.kpi:nth-child(3)::before,.kpi:nth-child(7)::before{background:#dc2626}
+.kpi .l{font-weight:600;text-transform:uppercase;letter-spacing:.03em;font-size:.7rem}
+.kpi .v{font-size:1.65rem}
+.calc{background:#ecfdf5;border:1px solid #a7f3d0;border-radius:12px;padding:12px}
+th{text-transform:uppercase;font-size:.7rem;letter-spacing:.04em}
+table tr:nth-child(even) td{background:#f8fafc}
+.voz{background:linear-gradient(135deg,#eff6ff,#ecfdf5);border:1px solid #bfdbfe;border-radius:14px;padding:12px}
+#vVoz{border-radius:999px;padding:12px 20px}
+/* forma de pagamento em botões */
+.chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chips .rot{flex-basis:100%;font-size:.82rem;font-weight:600;color:#475569}
+.chip{border:1.5px solid #d7dee8;background:#fff;border-radius:999px;padding:9px 16px;font:inherit;font-weight:600;color:#334155;cursor:pointer}
+.chip.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+.chips select{min-height:40px;width:auto}
+/* vendas do mês em cartões (aparecem no lugar da tabela no tablet) */
+#vCards{display:none;gap:10px}
+.vcard{background:#fff;border:1px solid var(--brd);border-radius:14px;padding:12px 14px;display:grid;gap:4px}
+.vcard .l1,.vcard .l2{display:flex;justify-content:space-between;align-items:center}
+.vcard .l1 b{font-size:1.05rem}
+.vcard .big{font-size:1.3rem;font-weight:700}
+.vcard .l3{color:var(--mut);font-size:.82rem}
+.vcard .lucro{color:#16a34a;font-weight:700}
+.vcard .acts{display:flex;gap:6px;justify-content:flex-end}
 </style>
 </head>
 <body>
 <header>
   <nav id="nav">
-    <button data-s="geral" class="on">Visão geral</button>
-    <button data-s="vendas">Vendas</button>
-    <button data-s="despesas">Despesas</button>
-    <button data-s="clientes">Clientes</button>
-    <button data-s="dizimo">Dízimo</button>
-    <button data-s="resumo">Resumo</button>
-    <button data-s="config">Config</button>
+    <button data-s="geral" class="on"><span class="ico">📊</span><span class="txt">Geral</span></button>
+    <button data-s="vendas"><span class="ico">🧾</span><span class="txt">Vendas</span></button>
+    <button data-s="despesas"><span class="ico">💸</span><span class="txt">Despesas</span></button>
+    <button data-s="clientes"><span class="ico">👥</span><span class="txt">Clientes</span></button>
+    <button data-s="dizimo"><span class="ico">🙏</span><span class="txt">Dízimo</span></button>
+    <button data-s="resumo"><span class="ico">📈</span><span class="txt">Resumo</span></button>
+    <button data-s="config"><span class="ico">⚙️</span><span class="txt">Config</span></button>
   </nav>
   <span id="status">sem dados</span>
   <button class="btn sm" id="reconectar" style="display:none;background:#fbbf24;color:#1d2330">Entrar no Google de novo</button>
@@ -128,7 +171,7 @@ table.resumo tr.final td{font-size:1.286rem;font-weight:700;border-top:2px solid
     <span class="muted" id="gObs"></span>
   </div>
   <div class="kpis" id="gKpis"></div>
-  <div class="card"><h2>Faturamento e lucro por mês</h2><div class="chart"><canvas id="cMes"></canvas></div></div>
+  <div class="card"><h2>📊 Faturamento e lucro por mês</h2><div class="chart"><canvas id="cMes"></canvas></div></div>
   <div class="grid2">
     <div class="card"><h2>Evolução anual</h2><div class="chart"><canvas id="cAno"></canvas></div></div>
     <div class="card"><h2>Formas de pagamento (ano selecionado)</h2><div class="chart"><canvas id="cMet"></canvas></div></div>
@@ -156,7 +199,8 @@ table.resumo tr.final td{font-size:1.286rem;font-weight:700;border-top:2px solid
       <label>Margem em peças – seu ganho (R$)<input name="descPecas" type="number" step="0.01" min="0" value="0"></label>
       <label>Serviço (R$)<input name="servico" type="number" step="0.01" min="0" value="0"></label>
       <label>Valor cobrado (R$)<input name="cobrado" type="number" step="0.01" min="0" value="0"></label>
-      <label>Pagamento<select name="metodo" id="selMetodo"></select></label>
+      <label style="display:none">Pagamento<select name="metodo" id="selMetodo"></select></label>
+      <div class="chips" id="vChips" style="grid-column:1/-1"></div>
       <div class="calc" style="grid-column:1/-1;display:flex;gap:8px;align-items:flex-start">
         <button type="button" class="info" id="vInfoBtn" title="Como o lucro é calculado" aria-expanded="false">i</button>
         <div id="vCalc" style="flex:1"></div>
@@ -185,7 +229,7 @@ table.resumo tr.final td{font-size:1.286rem;font-weight:700;border-top:2px solid
     <datalist id="dlClientes"></datalist>
   </div>
   <div class="card">
-    <h2>Vendas do mês</h2>
+    <h2>📋 Vendas do mês</h2>
     <div class="row" style="align-items:end;margin-bottom:8px">
       <label>Mês<input type="month" id="vMes"></label><label>Buscar<input id="vBusca" placeholder="cliente"></label>
       <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px">
@@ -195,13 +239,14 @@ table.resumo tr.final td{font-size:1.286rem;font-weight:700;border-top:2px solid
     </div>
     <div id="vResumo" class="muted" style="margin-bottom:8px"></div>
     <div class="scroll"><table id="tVendas"></table></div>
+    <div id="vCards"></div>
   </div>
 </section>
 
 <!-- DESPESAS -->
 <section class="sec" id="s-despesas">
   <div class="card">
-    <h2>Lançar despesa</h2>
+    <h2>💸 Lançar despesa</h2>
     <form class="f" id="fDesp" autocomplete="off">
       <input type="hidden" name="id">
       <label>Data<input name="data" type="date" required></label>
@@ -241,7 +286,7 @@ table.resumo tr.final td{font-size:1.286rem;font-weight:700;border-top:2px solid
 <section class="sec" id="s-dizimo">
   <div class="card" style="max-width:640px">
     <div class="row" style="justify-content:space-between;margin-bottom:8px">
-      <h2 style="margin:0">Dízimo do mês</h2>
+      <h2 style="margin:0">🙏 Dízimo do mês</h2>
       <label>Mês<input type="month" id="zMes"></label>
     </div>
     <table id="tDiz">
@@ -257,7 +302,7 @@ table.resumo tr.final td{font-size:1.286rem;font-weight:700;border-top:2px solid
 <section class="sec" id="s-resumo">
   <div class="card" style="max-width:560px">
     <div class="row" style="justify-content:space-between;margin-bottom:8px">
-      <h2 style="margin:0">Resumo do mês</h2>
+      <h2 style="margin:0">📈 Resumo do mês</h2>
       <label>Mês<input type="month" id="rMes"></label>
     </div>
     <table id="tResumo" class="resumo"></table>
@@ -322,7 +367,7 @@ const hoje=()=>new Date().toLocaleDateString("sv-SE");
 const fmtData=d=>d?d.split("-").reverse().join("/"):"";
 
 // Versão do painel: aumentar a cada ajuste (ver MEMORIA.md › Versões).
-const VERSAO="1.8.2";
+const VERSAO="1.9.0";
 document.getElementById("versao").textContent=VERSAO;
 
 let D=null, fonte=null, charts={};
@@ -569,7 +614,19 @@ function chart(id,type,data,opts={}){
 
 /* ---------- vendas ---------- */
 const fV=$("#fVenda");
+// Forma de pagamento em botões: Pix, Dinheiro, Débito e Crédito (ao escolher Crédito aparecem as parcelas).
+// O select "metodo" continua no formulário (escondido) e é ele que vale para salvar.
+function chipsPagamento(){
+  const box=$("#vChips"),m=fV.metodo.value,cred=m.startsWith("Crédito");
+  box.innerHTML='<span class="rot">Pagamento</span>'+["Pix","Dinheiro","Débito","Crédito"].map(n=>
+    `<button type="button" class="chip${(n==="Crédito"?cred:m===n)?" on":""}" data-m="${n}">${n}</button>`).join("")+
+    (cred?`<select id="vParc">${Array.from({length:10},(_,i)=>`<option value="Crédito ${i+1}x"${m===`Crédito ${i+1}x`?" selected":""}>${i+1}x</option>`).join("")}</select>`:"");
+}
+$("#vChips").addEventListener("click",e=>{const n=e.target.dataset?.m;if(!n)return;
+  fV.metodo.value=n==="Crédito"?(fV.metodo.value.startsWith("Crédito")?fV.metodo.value:"Crédito 1x"):n;calcVenda()});
+$("#vChips").addEventListener("change",e=>{if(e.target.id==="vParc"){fV.metodo.value=e.target.value;calcVenda()}});
 function calcVenda(){
+  chipsPagamento();
   const g=n=>+fV[n].value||0, tx=D.taxas[fV.metodo.value]??0;
   // lucro = tudo que o cliente pagou − custo real das peças (peças − margem) − taxa
   // = serviço + margem + valor cobrado a mais − taxa
@@ -615,6 +672,12 @@ function renderVendas(){
   $("#tVendas").innerHTML=`<tr><th>Data</th><th>Cliente</th><th class="n">Peças</th><th class="n">Margem peças</th><th class="n">Serviço</th><th class="n">Cobrado</th><th class="n">Cobrado a mais</th><th>Pagamento</th><th class="n">Taxa</th><th class="n">Lucro</th><th></th></tr>`+
     L.slice().reverse().map(v=>`<tr><td>${fmtData(v.data)}</td><td>${esc(v.cliente)}</td><td class="n">${brl(v.pecas)}</td><td class="n">${brl(v.descPecas)}</td><td class="n">${brl(v.servico)}</td><td class="n"><b>${brl(v.cobrado)}</b></td>${celMais(v)}<td>${esc(v.metodo)}</td><td class="n">${brl(v.taxa)}</td><td class="n">${brl(v.lucro)}</td>
     <td><button class="btn sm sec2" onclick="editarVenda('${v.id}')">Editar</button> <button class="btn sm del" onclick="apagar('vendas','${v.id}')">✕</button></td></tr>`).join("");
+  // no tablet a tabela some e aparecem estes cartões
+  $("#vCards").innerHTML=L.slice().reverse().map(v=>{const m=aMais(v);return`<div class="vcard">
+    <div class="l1"><b>${esc(v.cliente)}</b><span class="muted">${fmtData(v.data)}</span></div>
+    <div class="l2"><span class="big">${brl(v.cobrado)}</span><span class="tag">${esc(v.metodo)}</span></div>
+    <div class="l3">Peças ${brl(v.pecas)} · Serviço ${brl(v.servico)}${m?` · ${m>0?"a mais":"a menos"} ${brl(Math.abs(m))}`:""} · Lucro <span class="lucro">${brl(v.lucro)}</span></div>
+    <div class="acts"><button class="btn sm sec2" onclick="editarVenda('${v.id}')">Editar</button><button class="btn sm del" onclick="apagar('vendas','${v.id}')">✕</button></div></div>`}).join("");
 }
 window.editarVenda=id=>{const v=D.vendas.find(x=>x.id===id);for(const k in v)if(fV[k])fV[k].value=v[k];cobradoManual=descManual=true;$("#vTitulo").textContent="Editando venda de "+v.cliente;calcVenda();window.scrollTo({top:0,behavior:"smooth"})};
 window.apagar=(col,id)=>{if(!confirm("Apagar este lançamento?"))return;D[col]=D[col].filter(x=>x.id!==id);salvar();render()};
