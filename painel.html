@@ -321,7 +321,7 @@ const hoje=()=>new Date().toLocaleDateString("sv-SE");
 const fmtData=d=>d?d.split("-").reverse().join("/"):"";
 
 // Versão do painel: aumentar a cada ajuste (ver MEMORIA.md › Versões).
-const VERSAO="1.5.1";
+const VERSAO="1.5.2";
 document.getElementById("versao").textContent=VERSAO;
 
 let D=null, fonte=null, charts={};
@@ -719,6 +719,7 @@ async function gemGerar(corpo){
             if(D.gemini.modelo!==modelo){D.gemini.modelo=modelo;salvar()}
             return txt}
           if(r.status===400&&pensar)continue;
+          if(r.status===404){gemModelos.lista=gemModelos.lista.filter(m=>m!==modelo);if(D.gemini.modelo===modelo)delete D.gemini.modelo;break} // modelo desativado pelo Google
           if(r.status===401||r.status===403)throw new Error("chave da Gemini recusada ("+r.status+")");
           const err=(await r.json().catch(()=>({}))).error||{};
           const atraso=(err.details||[]).map(d=>d.retryDelay).find(Boolean);

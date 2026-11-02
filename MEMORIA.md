@@ -110,3 +110,4 @@ Copiar `painel.html` + `dados.json` para uma pasta temporária, servir com `pyth
 | 1.4.0 | 2026-11-02 | Venda por voz com Gemini (troca de modelo, nomes compostos, microfone contínuo); rodapé com autor e versão |
 | 1.5.0 | 2026-11-02 | Vendas: campo Obs removido do formulário e da lista (obs antigas continuam no arquivo, no histórico do cliente e no Excel); Gemini não preenche mais obs |
 | 1.5.1 | 2026-11-02 | Gemini: diferencia limite do plano gratuito (429) de sobrecarga (503), usa também modelos preview/lite, espera e tenta de novo antes de desistir |
+| 1.5.2 | 2026-11-02 | Gemini: modelo desativado pelo Google (404) sai da lista na hora |
