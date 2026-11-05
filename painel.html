@@ -367,7 +367,7 @@ const hoje=()=>new Date().toLocaleDateString("sv-SE");
 const fmtData=d=>d?d.split("-").reverse().join("/"):"";
 
 // Versão do painel: aumentar a cada ajuste (ver MEMORIA.md › Versões).
-const VERSAO="1.9.0";
+const VERSAO="1.9.1";
 document.getElementById("versao").textContent=VERSAO;
 
 let D=null, fonte=null, charts={};
@@ -640,6 +640,8 @@ function calcVenda(){
 let cobradoManual=false, descManual=false;
 const margemPadrao=()=>D.margemPadrao??10;
 fV.addEventListener("input",e=>{
+  // parcelas do crédito: anota antes de redesenhar os botões (o redesenho troca o select de lugar)
+  if(e.target.id==="vParc"){fV.metodo.value=e.target.value;calcVenda();return}
   const n=e.target.name;
   if(n==="cobrado")cobradoManual=true;
   // margem = 10% das peças, até o valor em R$ ser alterado à mão
