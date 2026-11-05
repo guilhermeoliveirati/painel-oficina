@@ -135,3 +135,4 @@ Copiar `painel.html` + `dados.json` para uma pasta temporária, servir com `pyth
 | 1.9.4 | 2026-11-05 | Vendas do mês: Mês, Buscar e Exportar sempre na mesma linha |
 | 1.9.5 | 2026-11-05 | Vendas: no lugar da conta do lucro fica só "ⓘ Como o lucro é calculado"; ao tocar abre a explicação, com a conta da venda atual no topo |
 | 1.9.6 | 2026-11-05 | Vendas: mais espaço entre pagamento, "Como o lucro é calculado" e Salvar/Limpar |
+| 1.9.7 | 2026-11-05 | "🎤 Falar venda" discreto ao lado do título; o campo de texto e o Preencher só aparecem depois de tocar nele e somem ao salvar ou limpar |

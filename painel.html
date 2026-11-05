@@ -112,7 +112,12 @@ label{font-size:.82rem;font-weight:600;color:#475569}
 th{text-transform:uppercase;font-size:.7rem;letter-spacing:.04em}
 table tr:nth-child(even) td{background:#f8fafc}
 .voz{background:linear-gradient(135deg,#eff6ff,#ecfdf5);border:1px solid #bfdbfe;border-radius:14px;padding:12px}
-#vVoz{border-radius:999px;padding:12px 20px}
+/* Falar venda discreto ao lado do título; o campo de texto e o Preencher só aparecem depois de tocar nele */
+.vtopo{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.vtopo h2{margin:0}
+#vVoz{border-radius:999px;padding:6px 14px;background:#eff6ff;color:var(--acc);border:1px solid #bfdbfe;font-weight:600}
+#vVoz.gravando{background:var(--bad);color:#fff;border-color:var(--bad)}
+.voz[hidden]{display:none!important}
 /* forma de pagamento em botões */
 .chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .chips .rot{flex-basis:100%;font-size:.82rem;font-weight:600;color:#475569}
@@ -195,9 +200,8 @@ table tr:nth-child(even) td{background:#f8fafc}
 <!-- VENDAS -->
 <section class="sec" id="s-vendas">
   <div class="card">
-    <h2 id="vTitulo">Nova venda</h2>
-    <div class="voz">
-      <button type="button" class="btn" id="vVoz">🎤 Falar venda</button>
+    <div class="vtopo"><h2 id="vTitulo">Nova venda</h2><button type="button" class="btn sm" id="vVoz">🎤 Falar venda</button></div>
+    <div class="voz" id="vVozBox" hidden>
       <input id="vVozTexto" placeholder="ou digite: Caio, peças 300, serviço 200, cobrei 550 no pix">
       <button type="button" class="btn sec2" id="vVozIr">Preencher</button>
       <div class="muted" id="vVozMsg" style="flex-basis:100%">Fale a venda e a Gemini preenche os campos. Você confere e salva.</div>
@@ -377,7 +381,7 @@ const hoje=()=>new Date().toLocaleDateString("sv-SE");
 const fmtData=d=>d?d.split("-").reverse().join("/"):"";
 
 // Versão do painel: aumentar a cada ajuste (ver MEMORIA.md › Versões).
-const VERSAO="1.9.6";
+const VERSAO="1.9.7";
 document.getElementById("versao").textContent=VERSAO;
 
 let D=null, fonte=null, charts={};
@@ -663,7 +667,8 @@ fV.addEventListener("input",e=>{
 fV.metodo.onchange=calcVenda;
 $("#vInfoLinha").onclick=()=>{const box=$("#vInfo");box.hidden=!box.hidden;$("#vInfoBtn").setAttribute("aria-expanded",!box.hidden)};
 function limparVenda(){fV.reset();fV.id.value="";fV.data.value=hoje();fV.metodo.value="Pix";cobradoManual=descManual=false;$("#vTitulo").textContent="Nova venda";calcVenda()}
-$("#vCancelar").onclick=limparVenda;
+function esconderVoz(){if(!ouvindo)$("#vVozBox").hidden=true}
+$("#vCancelar").onclick=()=>{limparVenda();esconderVoz()};
 fV.onsubmit=e=>{e.preventDefault();
   const {taxa,lucro}=calcVenda();
   const v={id:fV.id.value||novoId("v"),data:fV.data.value,cliente:nomeProprio(fV.cliente.value),pecas:r2(fV.pecas.value),descPecas:r2(fV.descPecas.value),
@@ -671,7 +676,7 @@ fV.onsubmit=e=>{e.preventDefault();
   const i=D.vendas.findIndex(x=>x.id===v.id); i>=0?D.vendas[i]=v:D.vendas.push(v);
   D.vendas.sort((a,b)=>a.data.localeCompare(b.data));
   $("#vMes").value=v.data.slice(0,7);
-  salvar();limparVenda();renderVendas();
+  salvar();limparVenda();esconderVoz();renderVendas();
 };
 function renderVendas(){
   const mes=$("#vMes").value, q=$("#vBusca").value.toLowerCase();
@@ -843,6 +848,7 @@ async function processarFrase(frase){
 // O Chrome (principalmente no Android) encerra o reconhecimento sozinho depois de uma pausa curta.
 // Por isso cada trecho é ouvido separado e o microfone é religado até a pessoa tocar em "Parar" (ou 2 minutos).
 $("#vVoz").onclick=()=>{
+  $("#vVozBox").hidden=false; // a área de texto/Preencher só aparece depois de tocar em "Falar venda"
   if(!D.gemini?.chave){vozStatus("Cole a chave da Gemini em Config primeiro.",true);return}
   if(ouvindo){ouvindo.parar();return}
   if(!Reconhecedor){vozStatus("Este navegador não reconhece voz: digite a frase ao lado e toque em Preencher.",true);return}
