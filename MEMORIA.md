@@ -130,3 +130,4 @@ Copiar `painel.html` + `dados.json` para uma pasta temporária, servir com `pyth
 | 1.8.2 | 2026-11-02 | Dízimo: tabela do mês cabe na largura do tablet |
 | 1.9.0 | 2026-11-02 | Novo layout (aprovado por imagens antes × depois): menu embaixo com ícones no tablet, cartões com sombra, campos maiores, KPIs coloridos, pagamento em botões, vendas do mês em cartões no tablet, ícones nos títulos. Backup do antigo: tag `v1.8.2-layout-antigo` |
 | 1.9.1 | 2026-11-04 | Correção: escolher as parcelas do crédito (2x–10x) voltava para 1x. Testar seletores com os eventos `input` **e** `change`, nessa ordem |
+| 1.9.2 | 2026-11-04 | Rodapé (criador e versão) aparecia escondido atrás do menu de baixo no tablet |

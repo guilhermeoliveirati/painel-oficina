@@ -39,7 +39,7 @@ nav button .ico{margin-right:4px}
   #status{position:fixed;top:8px;right:10px;background:rgba(29,35,48,.85);color:#e2e8f0;padding:3px 10px;border-radius:999px;font-size:.72rem;z-index:6}
   #reconectar{position:fixed;top:40px;right:10px}
   main{padding:16px 12px 96px!important}
-  #rodape{padding-bottom:96px}
+  body #rodape{padding-bottom:100px} /* acima do menu de baixo */
   .kpis{grid-template-columns:1fr 1fr}
   #tVendas{display:none}
   #s-vendas #vCards{display:grid}
@@ -367,7 +367,7 @@ const hoje=()=>new Date().toLocaleDateString("sv-SE");
 const fmtData=d=>d?d.split("-").reverse().join("/"):"";
 
 // Versão do painel: aumentar a cada ajuste (ver MEMORIA.md › Versões).
-const VERSAO="1.9.1";
+const VERSAO="1.9.2";
 document.getElementById("versao").textContent=VERSAO;
 
 let D=null, fonte=null, charts={};
