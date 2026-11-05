@@ -134,3 +134,4 @@ Copiar `painel.html` + `dados.json` para uma pasta temporária, servir com `pyth
 | 1.9.3 | 2026-11-05 | Cartões das vendas do mês mostram a taxa do cartão (em vermelho) quando houver |
 | 1.9.4 | 2026-11-05 | Vendas do mês: Mês, Buscar e Exportar sempre na mesma linha |
 | 1.9.5 | 2026-11-05 | Vendas: no lugar da conta do lucro fica só "ⓘ Como o lucro é calculado"; ao tocar abre a explicação, com a conta da venda atual no topo |
+| 1.9.6 | 2026-11-05 | Vendas: mais espaço entre pagamento, "Como o lucro é calculado" e Salvar/Limpar |
