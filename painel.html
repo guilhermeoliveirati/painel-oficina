@@ -208,12 +208,11 @@ table tr:nth-child(even) td{background:#f8fafc}
       <label>Valor cobrado (R$)<input name="cobrado" type="number" step="0.01" min="0" value="0"></label>
       <label style="display:none">Pagamento<select name="metodo" id="selMetodo"></select></label>
       <div class="chips" id="vChips" style="grid-column:1/-1"></div>
-      <div class="calc" style="grid-column:1/-1;display:flex;gap:8px;align-items:flex-start">
-        <button type="button" class="info" id="vInfoBtn" title="Como o lucro é calculado" aria-expanded="false">i</button>
-        <div id="vCalc" style="flex:1"></div>
+      <div id="vInfoLinha" style="grid-column:1/-1;display:flex;gap:8px;align-items:center;cursor:pointer;color:var(--acc);font-weight:600">
+        <button type="button" class="info" id="vInfoBtn" aria-expanded="false">i</button><span>Como o lucro é calculado</span>
       </div>
       <div class="infobox" id="vInfo" hidden style="grid-column:1/-1">
-        <b>Como o lucro é calculado</b>
+        <div class="calc" style="margin-bottom:10px"><b>Nesta venda:</b> <span id="vCalc"></span></div>
         <p style="margin:6px 0"><b>Lucro = valor cobrado + desconto em peças − venda de peças − taxa</b></p>
         <ul style="margin:0;padding-left:18px">
           <li><b>Valor cobrado</b>: o que o cliente paga (peças + serviço + o valor a mais que você define na hora).</li>
@@ -374,7 +373,7 @@ const hoje=()=>new Date().toLocaleDateString("sv-SE");
 const fmtData=d=>d?d.split("-").reverse().join("/"):"";
 
 // Versão do painel: aumentar a cada ajuste (ver MEMORIA.md › Versões).
-const VERSAO="1.9.4";
+const VERSAO="1.9.5";
 document.getElementById("versao").textContent=VERSAO;
 
 let D=null, fonte=null, charts={};
@@ -658,7 +657,7 @@ fV.addEventListener("input",e=>{
   calcVenda();
 });
 fV.metodo.onchange=calcVenda;
-$("#vInfoBtn").onclick=e=>{const box=$("#vInfo");box.hidden=!box.hidden;e.currentTarget.setAttribute("aria-expanded",!box.hidden)};
+$("#vInfoLinha").onclick=()=>{const box=$("#vInfo");box.hidden=!box.hidden;$("#vInfoBtn").setAttribute("aria-expanded",!box.hidden)};
 function limparVenda(){fV.reset();fV.id.value="";fV.data.value=hoje();fV.metodo.value="Pix";cobradoManual=descManual=false;$("#vTitulo").textContent="Nova venda";calcVenda()}
 $("#vCancelar").onclick=limparVenda;
 fV.onsubmit=e=>{e.preventDefault();
