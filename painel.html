@@ -127,6 +127,7 @@ table tr:nth-child(even) td{background:#f8fafc}
 .vcard .big{font-size:1.3rem;font-weight:700}
 .vcard .l3{color:var(--mut);font-size:.82rem}
 .vcard .lucro{color:#16a34a;font-weight:700}
+.vcard .taxa{color:#dc2626;font-weight:600}
 .vcard .acts{display:flex;gap:6px;justify-content:flex-end}
 </style>
 </head>
@@ -367,7 +368,7 @@ const hoje=()=>new Date().toLocaleDateString("sv-SE");
 const fmtData=d=>d?d.split("-").reverse().join("/"):"";
 
 // Versão do painel: aumentar a cada ajuste (ver MEMORIA.md › Versões).
-const VERSAO="1.9.2";
+const VERSAO="1.9.3";
 document.getElementById("versao").textContent=VERSAO;
 
 let D=null, fonte=null, charts={};
@@ -678,7 +679,7 @@ function renderVendas(){
   $("#vCards").innerHTML=L.slice().reverse().map(v=>{const m=aMais(v);return`<div class="vcard">
     <div class="l1"><b>${esc(v.cliente)}</b><span class="muted">${fmtData(v.data)}</span></div>
     <div class="l2"><span class="big">${brl(v.cobrado)}</span><span class="tag">${esc(v.metodo)}</span></div>
-    <div class="l3">Peças ${brl(v.pecas)} · Serviço ${brl(v.servico)}${m?` · ${m>0?"a mais":"a menos"} ${brl(Math.abs(m))}`:""} · Lucro <span class="lucro">${brl(v.lucro)}</span></div>
+    <div class="l3">Peças ${brl(v.pecas)} · Serviço ${brl(v.servico)}${m?` · ${m>0?"a mais":"a menos"} ${brl(Math.abs(m))}`:""}${v.taxa?` · Taxa cartão <span class="taxa">${brl(v.taxa)}</span>`:""} · Lucro <span class="lucro">${brl(v.lucro)}</span></div>
     <div class="acts"><button class="btn sm sec2" onclick="editarVenda('${v.id}')">Editar</button><button class="btn sm del" onclick="apagar('vendas','${v.id}')">✕</button></div></div>`}).join("");
 }
 window.editarVenda=id=>{const v=D.vendas.find(x=>x.id===id);for(const k in v)if(fV[k])fV[k].value=v[k];cobradoManual=descManual=true;$("#vTitulo").textContent="Editando venda de "+v.cliente;calcVenda();window.scrollTo({top:0,behavior:"smooth"})};
