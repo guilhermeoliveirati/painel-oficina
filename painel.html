@@ -128,6 +128,12 @@ table tr:nth-child(even) td{background:#f8fafc}
 .vcard .l3{color:var(--mut);font-size:.82rem}
 .vcard .lucro{color:#16a34a;font-weight:700}
 .vcard .taxa{color:#dc2626;font-weight:600}
+/* Mês, Buscar e Exportar sempre na mesma linha */
+#vFiltros{flex-wrap:nowrap}
+#vFiltros label{flex:none}
+#vFiltros label.busca{flex:1;min-width:0}
+#vFiltros label.busca input{width:100%;box-sizing:border-box}
+#vFiltros>div{flex:none}
 .vcard .acts{display:flex;gap:6px;justify-content:flex-end}
 </style>
 </head>
@@ -231,8 +237,8 @@ table tr:nth-child(even) td{background:#f8fafc}
   </div>
   <div class="card">
     <h2>📋 Vendas do mês</h2>
-    <div class="row" style="align-items:end;margin-bottom:8px">
-      <label>Mês<input type="month" id="vMes"></label><label>Buscar<input id="vBusca" placeholder="cliente"></label>
+    <div class="row" id="vFiltros" style="align-items:end;margin-bottom:8px">
+      <label>Mês<input type="month" id="vMes"></label><label class="busca">Buscar<input id="vBusca" placeholder="cliente"></label>
       <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:2px">
         <a href="#" id="vTrocaPasta" class="muted" title="Esquece a pasta escolhida e pergunta de novo no próximo Excel">trocar pasta</a>
         <button class="btn sec2" id="vExcel" title="Cria a planilha Excel do mês dentro da pasta do ano (ex.: Mecanica, pasta 2026)">📄 Exportar</button>
@@ -368,7 +374,7 @@ const hoje=()=>new Date().toLocaleDateString("sv-SE");
 const fmtData=d=>d?d.split("-").reverse().join("/"):"";
 
 // Versão do painel: aumentar a cada ajuste (ver MEMORIA.md › Versões).
-const VERSAO="1.9.3";
+const VERSAO="1.9.4";
 document.getElementById("versao").textContent=VERSAO;
 
 let D=null, fonte=null, charts={};

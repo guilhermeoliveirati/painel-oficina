@@ -132,3 +132,4 @@ Copiar `painel.html` + `dados.json` para uma pasta temporária, servir com `pyth
 | 1.9.1 | 2026-11-04 | Correção: escolher as parcelas do crédito (2x–10x) voltava para 1x. Testar seletores com os eventos `input` **e** `change`, nessa ordem |
 | 1.9.2 | 2026-11-04 | Rodapé (criador e versão) aparecia escondido atrás do menu de baixo no tablet |
 | 1.9.3 | 2026-11-05 | Cartões das vendas do mês mostram a taxa do cartão (em vermelho) quando houver |
+| 1.9.4 | 2026-11-05 | Vendas do mês: Mês, Buscar e Exportar sempre na mesma linha |
